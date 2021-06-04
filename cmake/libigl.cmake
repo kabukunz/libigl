@@ -36,6 +36,7 @@ option(LIBIGL_WITH_MMG               "Use MMG"                      OFF)
 option(LIBIGL_WITH_PREDICATES        "Use exact predicates"         OFF)
 option(LIBIGL_WITH_XML               "Use XML"                      OFF)
 option(LIBIGL_WITHOUT_COPYLEFT       "Disable Copyleft libraries"   OFF)
+option(LIBIGL_LGPL_BUILD_SHARED      "Build shared LGPL libraries"  OFF)
 option(LIBIGL_EXPORT_TARGETS         "Export libigl CMake targets"  OFF)
 
 if(LIBIGL_BUILD_PYTHON)
@@ -272,17 +273,21 @@ if(LIBIGL_WITH_MMG)
     igl_download_mmg()
     set(MMG_DIR "${LIBIGL_EXTERNAL}/mmg")
     # find_package(MMG2D REQUIRED)
-    # INCLUDE(FindMmg2d.cmake)
-    set(BUILD "MMG2D" CACHE STRING  "MMG2D BUILD ONLY" FORCE)
+    
+    set(BUILD "MMG2D" CACHE STRING "MMG2D BUILD ONLY" FORCE)
 
-    set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared libraries" FORCE)
-    set(LIBMMG2D_STATIC ON CACHE BOOL "Build shared libraries" FORCE)
-    set(LIBMMG2D_SHARED ON CACHE BOOL "Build shared libraries" FORCE)
+    # this needs to be built anyway
+    set(LIBMMG2D_STATIC ON CACHE BOOL "Compile the mmg2d static library" FORCE)
+    
+    # check if building LGPL libs as shared libraries
+    if(LIBIGL_LGPL_BUILD_SHARED)
+        set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared libraries" FORCE)
+        set(LIBMMG2D_SHARED ON CACHE BOOL "Compile the mmg2d dynamic library" FORCE)
+    endif()    
 
     set(USE_SCOTCH OFF CACHE BOOL "Use SCOTCH TOOL for renumbering" FORCE)            
     set(USE_ELAS OFF CACHE BOOL "Use the Elas library for lagrangian motion option" FORCE)
     set(USE_VTK OFF CACHE BOOL "Use VTK I/O" FORCE)
-
     set(MMG2D_CI OFF CACHE BOOL "Enable/Disable continuous integration for mmg2d" FORCE)
     set(BUILD_TESTING OFF CACHE BOOL "Enable/Disable continuous integration for mmg2d" FORCE)
 
