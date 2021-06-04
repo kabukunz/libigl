@@ -32,6 +32,7 @@ option(LIBIGL_WITH_OPENGL_GLFW_IMGUI "Use ImGui"                    OFF)
 option(LIBIGL_WITH_PNG               "Use PNG"                      OFF)
 option(LIBIGL_WITH_TETGEN            "Use Tetgen"                   OFF)
 option(LIBIGL_WITH_TRIANGLE          "Use Triangle"                 OFF)
+option(LIBIGL_WITH_MMG               "Use MMG"                      OFF)
 option(LIBIGL_WITH_PREDICATES        "Use exact predicates"         OFF)
 option(LIBIGL_WITH_XML               "Use XML"                      OFF)
 option(LIBIGL_WITHOUT_COPYLEFT       "Disable Copyleft libraries"   OFF)
@@ -261,6 +262,40 @@ function(igl_copy_cgal_dll target)
   if(WIN32 AND LIBIGL_WITH_CGAL)
     igl_copy_imported_dll(CGAL::CGAL ${target})
     igl_copy_imported_dll(CGAL::CGAL_Core ${target})
+  endif()
+endfunction()
+
+################################################################################
+### Compile the MMG part ###
+if(LIBIGL_WITH_MMG)
+  if(NOT TARGET mmg)
+    igl_download_mmg()
+    set(MMG_DIR "${LIBIGL_EXTERNAL}/mmg")
+    # find_package(MMG2D REQUIRED)
+    # INCLUDE(FindMmg2d.cmake)
+    set(BUILD "MMG2D" CACHE STRING  "MMG2D BUILD ONLY" FORCE)
+
+    set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared libraries" FORCE)
+    set(LIBMMG2D_STATIC ON CACHE BOOL "Build shared libraries" FORCE)
+    set(LIBMMG2D_SHARED ON CACHE BOOL "Build shared libraries" FORCE)
+
+    set(USE_SCOTCH OFF CACHE BOOL "Use SCOTCH TOOL for renumbering" FORCE)            
+    set(USE_ELAS OFF CACHE BOOL "Use the Elas library for lagrangian motion option" FORCE)
+    set(USE_VTK OFF CACHE BOOL "Use VTK I/O" FORCE)
+
+    set(MMG2D_CI OFF CACHE BOOL "Enable/Disable continuous integration for mmg2d" FORCE)
+    set(BUILD_TESTING OFF CACHE BOOL "Enable/Disable continuous integration for mmg2d" FORCE)
+
+    add_subdirectory("${MMG_DIR}" "mmg")
+  endif()
+  compile_igl_module("mmg")
+  target_link_libraries(igl_mmg ${IGL_SCOPE} ${MMG2D_LIBRARY})
+  target_include_directories(igl_mmg ${IGL_SCOPE} ${MMG2D_INCLUDE_DIR})
+endif()
+
+function(igl_copy_mmg_dll target)
+  if(WIN32 AND LIBIGL_WITH_MMG)
+    igl_copy_imported_dll(${MMG2D_LIBRARY} ${target})
   endif()
 endfunction()
 
