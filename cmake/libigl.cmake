@@ -36,7 +36,6 @@ option(LIBIGL_WITH_MMG               "Use MMG"                      OFF)
 option(LIBIGL_WITH_PREDICATES        "Use exact predicates"         OFF)
 option(LIBIGL_WITH_XML               "Use XML"                      OFF)
 option(LIBIGL_WITHOUT_COPYLEFT       "Disable Copyleft libraries"   OFF)
-option(LIBIGL_LGPL_BUILD_SHARED      "Build shared LGPL libraries"  OFF)
 option(LIBIGL_EXPORT_TARGETS         "Export libigl CMake targets"  OFF)
 
 if(LIBIGL_BUILD_PYTHON)
@@ -274,23 +273,39 @@ if(LIBIGL_WITH_MMG)
     set(MMG_DIR "${LIBIGL_EXTERNAL}/mmg")
     # find_package(MMG2D REQUIRED)
     
+    if(LIBIGL_USE_STATIC_LIBRARY AND LIBIGL_WITHOUT_COPYLEFT)
+        message(FATAL "Cannot build a static LGPL library without copyleft")
+    endif()
+
     set(BUILD "MMG2D" CACHE STRING "MMG2D BUILD ONLY" FORCE)
-
-    # this needs to be built anyway
+    set(LIBMMG2D_SHARED OFF CACHE BOOL "Compile the mmg2d dynamic library" FORCE)        
     set(LIBMMG2D_STATIC ON CACHE BOOL "Compile the mmg2d static library" FORCE)
-    
-    # check if building LGPL libs as shared libraries
-    if(LIBIGL_LGPL_BUILD_SHARED)
-        set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared libraries" FORCE)
-        set(LIBMMG2D_SHARED ON CACHE BOOL "Compile the mmg2d dynamic library" FORCE)
-    endif()    
 
+    else()
+        if(NOT LIBIGL_WITHOUT_COPYLEFT)
+            set(LIBMMG2D_SHARED ON CACHE BOOL "Compile the mmg2d dynamic library" FORCE)        
+            set(LIBMMG2D_STATIC OFF CACHE BOOL "Compile the mmg2d static library" FORCE)
+            set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared libraries" FORCE)
+        else()
+
+        endif()
+    endif()
+
+    # NOTE: LIBIGL_USE_STATIC_LIBRARY causes no sources error
+    if(LIBIGL_USE_STATIC_LIBRARY AND NOT LIBIGL_WITHOUT_COPYLEFT)
+        set(LIBMMG2D_SHARED OFF CACHE BOOL "Compile the mmg2d dynamic library" FORCE)
+        set(LIBMMG2D_STATIC ON CACHE BOOL "Compile the mmg2d static library" FORCE)
+    endif()
+    
+    if(NOT LIBIGL_USE_STATIC_LIBRARY AND LIBIGL_WITHOUT_COPYLEFT)
+    endif()    
+    
     set(USE_SCOTCH OFF CACHE BOOL "Use SCOTCH TOOL for renumbering" FORCE)            
     set(USE_ELAS OFF CACHE BOOL "Use the Elas library for lagrangian motion option" FORCE)
     set(USE_VTK OFF CACHE BOOL "Use VTK I/O" FORCE)
     set(MMG2D_CI OFF CACHE BOOL "Enable/Disable continuous integration for mmg2d" FORCE)
     set(BUILD_TESTING OFF CACHE BOOL "Enable/Disable continuous integration for mmg2d" FORCE)
-
+    
     add_subdirectory("${MMG_DIR}" "mmg")
   endif()
   compile_igl_module("mmg")
