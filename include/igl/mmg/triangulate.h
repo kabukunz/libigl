@@ -9,7 +9,6 @@
 #ifndef IGL_MMG_TRIANGULATE_H
 #define IGL_MMG_TRIANGULATE_H
 #include "../igl_inline.h"
-#include <string>
 #include <Eigen/Core>
 
 namespace igl
@@ -22,23 +21,23 @@ namespace igl
     //   V #V by 2 list of 2D vertex positions
     //   E #E by 2 list of vertex ids forming unoriented edges of the boundary of the polygon
     //   H #H by 2 coordinates of points contained inside holes of the polygon
-    //   flags  string of options pass to triangle (see triangle documentation)
     // Outputs:
-    //   bool #triangulation result, can be false because of constraints or other errors
-    //   V2  #V2 by 2  coordinates of the vertives of the generated triangulation
-    //   F2  #F2 by 3  list of indices forming the faces of the generated triangulation
+    //   V2   #V2 by 2  coordinates of the vertives of the generated triangulation
+    //   F2   #F2 by 3  list of indices forming the faces of the generated triangulation
+    //   bool #result   triangulation result, can be false because of constraints or other errors
     
     template <
-      typename DerivedV,
-      typename DerivedE,
-      typename DerivedV2,
-      typename DerivedF2>
-    IGL_INLINE bool triangulate(
-      const Eigen::MatrixBase<DerivedV> & V,
-      const Eigen::MatrixBase<DerivedE> & E,
-      Eigen::PlainObjectBase<DerivedV2> & V2,
-      Eigen::PlainObjectBase<DerivedF2> & F2);
-        
+    typename DerivedV,
+    typename DerivedE,
+    typename DerivedH,
+    typename DerivedV2,
+    typename DerivedF2>
+    IGL_INLINE void igl::mmg::triangulate(
+    const Eigen::MatrixBase<DerivedV> & V,
+    const Eigen::MatrixBase<DerivedE> & E,
+    const Eigen::MatrixBase<DerivedH> & H,
+    Eigen::PlainObjectBase<DerivedV2> & V2,
+    Eigen::PlainObjectBase<DerivedF2> & F2);        
   }
 }
 
