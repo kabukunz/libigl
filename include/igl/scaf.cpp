@@ -6,8 +6,13 @@
 // v. 2.0. If a copy of the MPL was not distributed with this file, You can
 // obtain one at http://mozilla.org/MPL/2.0/.
 
-#include "scaf.h"
+#ifdef LIBIGL_WITH_MMG
+#include <igl/mmg/triangulate.h>
+#else
+#include <igl/triangle/triangulate.h>
+#endif
 
+#include "scaf.h"
 #include <Eigen/Dense>
 #include <Eigen/IterativeLinearSolvers>
 #include <Eigen/Sparse>
@@ -28,7 +33,7 @@
 #include <igl/slice.h>
 #include <igl/slice_into.h>
 #include <igl/slim.h>
-#include <igl/triangle/triangulate.h>
+
 #include "mapping_energy_with_jacobians.h"
 
 #include <iostream>

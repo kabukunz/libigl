@@ -267,38 +267,14 @@ endfunction()
 
 ################################################################################
 ### Compile the MMG part ###
-if(LIBIGL_WITH_MMG)
+if(LIBIGL_WITH_MMG)  
   if(NOT TARGET mmg)
     igl_download_mmg()
     set(MMG_DIR "${LIBIGL_EXTERNAL}/mmg")
-    # find_package(MMG2D REQUIRED)
     
-    if(LIBIGL_USE_STATIC_LIBRARY AND LIBIGL_WITHOUT_COPYLEFT)
-        message(FATAL "Cannot build a static LGPL library without copyleft")
-    endif()
-
     set(BUILD "MMG2D" CACHE STRING "MMG2D BUILD ONLY" FORCE)
-    set(LIBMMG2D_SHARED OFF CACHE BOOL "Compile the mmg2d dynamic library" FORCE)        
-    set(LIBMMG2D_STATIC ON CACHE BOOL "Compile the mmg2d static library" FORCE)
-
-    else()
-        if(NOT LIBIGL_WITHOUT_COPYLEFT)
-            set(LIBMMG2D_SHARED ON CACHE BOOL "Compile the mmg2d dynamic library" FORCE)        
-            set(LIBMMG2D_STATIC OFF CACHE BOOL "Compile the mmg2d static library" FORCE)
-            set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared libraries" FORCE)
-        else()
-
-        endif()
-    endif()
-
-    # NOTE: LIBIGL_USE_STATIC_LIBRARY causes no sources error
-    if(LIBIGL_USE_STATIC_LIBRARY AND NOT LIBIGL_WITHOUT_COPYLEFT)
-        set(LIBMMG2D_SHARED OFF CACHE BOOL "Compile the mmg2d dynamic library" FORCE)
-        set(LIBMMG2D_STATIC ON CACHE BOOL "Compile the mmg2d static library" FORCE)
-    endif()
-    
-    if(NOT LIBIGL_USE_STATIC_LIBRARY AND LIBIGL_WITHOUT_COPYLEFT)
-    endif()    
+    # option(LIBMMG2D_SHARED "Compile the mmg2d dynamic library" OFF)        
+    # option(LIBMMG2D_STATIC "Compile the mmg2d static library" OFF)
     
     set(USE_SCOTCH OFF CACHE BOOL "Use SCOTCH TOOL for renumbering" FORCE)            
     set(USE_ELAS OFF CACHE BOOL "Use the Elas library for lagrangian motion option" FORCE)
@@ -311,6 +287,8 @@ if(LIBIGL_WITH_MMG)
   compile_igl_module("mmg")
   target_link_libraries(igl_mmg ${IGL_SCOPE} ${MMG2D_LIBRARY})
   target_include_directories(igl_mmg ${IGL_SCOPE} ${MMG2D_INCLUDE_DIR})
+  target_compile_definitions(igl_mmg ${IGL_SCOPE} -DLIBIGL_WITH_MMG)
+  set(LIBIGL_WITH_TRIANGLE OFF CACHE BOOL "" FORCE)
 endif()
 
 function(igl_copy_mmg_dll target)
@@ -496,6 +474,7 @@ if(LIBIGL_WITH_TRIANGLE)
   compile_igl_module("triangle")
   target_link_libraries(igl_triangle ${IGL_SCOPE} triangle)
   target_include_directories(igl_triangle ${IGL_SCOPE} ${TRIANGLE_DIR})
+  set(LIBIGL_WITH_MMG OFF CACHE BOOL "" FORCE)
 endif()
 
 ################################################################################
