@@ -273,8 +273,8 @@ if(LIBIGL_WITH_MMG)
     set(MMG_DIR "${LIBIGL_EXTERNAL}/mmg")
     
     set(BUILD "MMG2D" CACHE STRING "MMG2D BUILD ONLY" FORCE)
-    # option(LIBMMG2D_SHARED "Compile the mmg2d dynamic library" OFF)        
-    # option(LIBMMG2D_STATIC "Compile the mmg2d static library" OFF)
+    set(LIBMMG2D_SHARED ON CACHE BOOL "Compile the mmg2d dynamic library")
+    set(LIBMMG2D_STATIC OFF CACHE BOOL "Compile the mmg2d static library")
     
     set(USE_SCOTCH OFF CACHE BOOL "Use SCOTCH TOOL for renumbering" FORCE)            
     set(USE_ELAS OFF CACHE BOOL "Use the Elas library for lagrangian motion option" FORCE)
