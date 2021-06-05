@@ -15,7 +15,7 @@ namespace igl
 {
   namespace mmg
   {
-    // Triangulate the interior of a polygon using the mmg2d library.
+    // Triangulate the interior of a polygon using the mmg library.
     //
     // Inputs:
     //   V #V by 2 list of 2D vertex positions
@@ -32,7 +32,7 @@ namespace igl
     typename DerivedH,
     typename DerivedV2,
     typename DerivedF2>
-    IGL_INLINE void igl::mmg::triangulate(
+    IGL_INLINE bool triangulate(
     const Eigen::MatrixBase<DerivedV> & V,
     const Eigen::MatrixBase<DerivedE> & E,
     const Eigen::MatrixBase<DerivedH> & H,
