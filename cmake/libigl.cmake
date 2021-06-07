@@ -270,19 +270,15 @@ endfunction()
 if(LIBIGL_WITH_MMG)  
   if(NOT TARGET mmg)
     igl_download_mmg()
-    # set(MMG_DIR "${LIBIGL_EXTERNAL}/mmg")
     
-    set(BUILD "MMG2D" CACHE STRING "MMG2D BUILD ONLY" FORCE)
-    set(LIBMMG2D_SHARED ON CACHE BOOL "Compile the mmg2d dynamic library")
-    set(LIBMMG2D_STATIC OFF CACHE BOOL "Compile the mmg2d static library")
+    list(APPEND CMAKE_MODULE_PATH "${LIBIGL_EXTERNAL}/mmg/cmake/tools")
+
+    # have mmg dir from prebuilt
+    set(MMG_DIR "${CMAKE_BINARY_DIR}/prebuilt/mmg" CACHE STRING "MMG PREBUILT" FORCE)
     
-    set(USE_SCOTCH OFF CACHE BOOL "Use SCOTCH TOOL for renumbering" FORCE)            
-    set(USE_ELAS OFF CACHE BOOL "Use the Elas library for lagrangian motion option" FORCE)
-    set(USE_VTK OFF CACHE BOOL "Use VTK I/O" FORCE)
-    set(MMG2D_CI OFF CACHE BOOL "Enable/Disable continuous integration for mmg2d" FORCE)
-    set(BUILD_TESTING OFF CACHE BOOL "Enable/Disable continuous integration for mmg2d" FORCE)
-    
-    add_subdirectory("${LIBIGL_EXTERNAL}/mmg" "mmg")
+    # find package
+    find_package(MMG2D)
+
   endif()
   compile_igl_module("mmg")
   target_link_libraries(igl_mmg ${IGL_SCOPE} ${MMG2D_LIBRARY})
