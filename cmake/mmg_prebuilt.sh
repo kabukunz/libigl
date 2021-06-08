@@ -3,7 +3,7 @@
 LIBIGL_DIR=/Users/max/Developer/Library/Graphics/libiglmmg/libigl
 MMG_SOURCEDIR=external/mmg
 MMG_BUILDDIR=build/prebuilt/mmg
-MMG_INSTALLDIR=$LIBIGL_DIR/install
+# MMG_INSTALLDIR=$LIBIGL_DIR/install
 
 MMG_BUILDTYPE=Release
 
@@ -22,4 +22,4 @@ cmake -S $MMG_SOURCEDIR -B $MMG_BUILDDIR \
 
 make -C $MMG_BUILDDIR
 
-make -C $MMG_BUILDDIR install
+# make -C $MMG_BUILDDIR install

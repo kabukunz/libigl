@@ -269,30 +269,26 @@ endfunction()
 ### Compile the MMG part ###
 if(LIBIGL_WITH_MMG)  
   if(NOT TARGET mmg)
-    igl_download_mmg()
-    
-    set(BUILD "MMG2D" CACHE STRING "MMG2D BUILD ONLY" FORCE)
-    set(LIBMMG2D_SHARED ON CACHE BOOL "Compile the mmg2d dynamic library")
-    set(LIBMMG2D_STATIC ON CACHE BOOL "Compile the mmg2d static library")
-    
-    set(USE_SCOTCH OFF CACHE BOOL "Use SCOTCH TOOL for renumbering" FORCE)            
-    set(USE_ELAS OFF CACHE BOOL "Use the Elas library for lagrangian motion option" FORCE)
-    set(USE_VTK OFF CACHE BOOL "Use VTK I/O" FORCE)
-    set(MMG2D_CI OFF CACHE BOOL "Enable/Disable continuous integration for mmg2d" FORCE)
-    set(BUILD_TESTING OFF CACHE BOOL "Enable/Disable continuous integration for mmg2d" FORCE)
-    
-    add_subdirectory("${LIBIGL_EXTERNAL}/mmg" "mmg")
-    
+
+    # add_custom_target(MMG_PREBUILT)
+
+    # add_custom_command(TARGET MMG_PREBUILT
+    # PRE_BUILD
+    # COMMAND /bin/sh "${LIBIGL_ROOT}/cmake/mmg_prebuilt.sh"
+    # )    
+
     list(APPEND CMAKE_MODULE_PATH "${LIBIGL_EXTERNAL}/mmg/cmake/tools")
-    set(MMG_DIR "${CMAKE_BINARY_DIR}/mmg" CACHE STRING "MMG DIR" FORCE)
-    
-    # find package (CONFIG does not work)
-    find_package(MMG2D MODULE)
+
+  # have mmg dir from prebuilt
+  # set(MMG_DIR "${CMAKE_BINARY_DIR}/prebuilt/mmg" CACHE STRING "MMG PREBUILT" FORCE)
+  
+  # find package (CONFIG doesn't work)
+    find_package(MMG2D)
 
   endif()
   compile_igl_module("mmg")
   target_link_libraries(igl_mmg ${IGL_SCOPE} ${MMG2D_LIBRARIES})
-  target_include_directories(igl_mmg ${IGL_SCOPE} "${CMAKE_BINARY_DIR}/mmg/include")
+  target_include_directories(igl_mmg ${IGL_SCOPE} ${MMG2D_INCLUDE_DIRS})
   message(WARNING ${MMG2D_INCLUDE_DIRS})
   message(WARNING ${MMG2D_LIBRARIES})
   target_compile_definitions(igl_mmg ${IGL_SCOPE} -DLIBIGL_WITH_MMG)
