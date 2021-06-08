@@ -271,22 +271,31 @@ if(LIBIGL_WITH_MMG)
   if(NOT TARGET mmg)
     igl_download_mmg()
     
-    list(APPEND CMAKE_MODULE_PATH "${LIBIGL_EXTERNAL}/mmg/cmake/tools")
-
-    # have mmg dir from prebuilt
-    # set(MMG_DIR "${CMAKE_BINARY_DIR}/prebuilt/mmg" CACHE STRING "MMG PREBUILT" FORCE)
+    set(BUILD "MMG2D" CACHE STRING "MMG2D BUILD ONLY" FORCE)
+    set(LIBMMG2D_SHARED ON CACHE BOOL "Compile the mmg2d dynamic library")
+    set(LIBMMG2D_STATIC ON CACHE BOOL "Compile the mmg2d static library")
     
-    # find package
-    find_package(MMG2D)
+    set(USE_SCOTCH OFF CACHE BOOL "Use SCOTCH TOOL for renumbering" FORCE)            
+    set(USE_ELAS OFF CACHE BOOL "Use the Elas library for lagrangian motion option" FORCE)
+    set(USE_VTK OFF CACHE BOOL "Use VTK I/O" FORCE)
+    set(MMG2D_CI OFF CACHE BOOL "Enable/Disable continuous integration for mmg2d" FORCE)
+    set(BUILD_TESTING OFF CACHE BOOL "Enable/Disable continuous integration for mmg2d" FORCE)
+    
+    add_subdirectory("${LIBIGL_EXTERNAL}/mmg" "mmg")
+    
+    list(APPEND CMAKE_MODULE_PATH "${LIBIGL_EXTERNAL}/mmg/cmake/tools")
+    set(MMG_DIR "${CMAKE_BINARY_DIR}/mmg" CACHE STRING "MMG DIR" FORCE)
+    
+    # find package (CONFIG does not work)
+    find_package(MMG2D MODULE)
 
   endif()
   compile_igl_module("mmg")
   target_link_libraries(igl_mmg ${IGL_SCOPE} ${MMG2D_LIBRARIES})
-  target_include_directories(igl_mmg ${IGL_SCOPE} ${MMG2D_INCLUDE_DIRS})
+  target_include_directories(igl_mmg ${IGL_SCOPE} "${CMAKE_BINARY_DIR}/mmg/include")
   message(WARNING ${MMG2D_INCLUDE_DIRS})
   message(WARNING ${MMG2D_LIBRARIES})
   target_compile_definitions(igl_mmg ${IGL_SCOPE} -DLIBIGL_WITH_MMG)
-  set(LIBIGL_WITH_TRIANGLE OFF CACHE BOOL "" FORCE)
 endif()
 
 function(igl_copy_mmg_dll target)
@@ -472,7 +481,6 @@ if(LIBIGL_WITH_TRIANGLE)
   compile_igl_module("triangle")
   target_link_libraries(igl_triangle ${IGL_SCOPE} triangle)
   target_include_directories(igl_triangle ${IGL_SCOPE} ${TRIANGLE_DIR})
-  set(LIBIGL_WITH_MMG OFF CACHE BOOL "" FORCE)
 endif()
 
 ################################################################################
