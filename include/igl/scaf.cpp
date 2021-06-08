@@ -220,11 +220,11 @@ void mesh_improve(igl::SCAFData &s)
   H /= 3.;
 
   MatrixXd uv2;
+
+//   TODO: holes
   
 #ifdef LIBIGL_WITH_MMG
-    if(!igl::mmg::triangulate(V, E, H, uv2, s.s_T)){
-        //   cout << "MMG REMESHING ERROR!!!" << endl;
-    }
+    igl::mmg::triangulate(V, E, H, uv2, s.s_T);
 #else
     igl::triangle::triangulate(V, E, H, std::basic_string<char>("qYYQ"), uv2, s.s_T);
 #endif
