@@ -220,7 +220,15 @@ void mesh_improve(igl::SCAFData &s)
   H /= 3.;
 
   MatrixXd uv2;
-  igl::triangle::triangulate(V, E, H, std::basic_string<char>("qYYQ"), uv2, s.s_T);
+  
+#ifdef LIBIGL_WITH_MMG
+    if(!igl::mmg::triangulate(V, E, H, uv2, s.s_T)){
+        //   cout << "MMG REMESHING ERROR!!!" << endl;
+    }
+#else
+    igl::triangle::triangulate(V, E, H, std::basic_string<char>("qYYQ"), uv2, s.s_T);
+#endif
+  
   auto bnd_n = s.internal_bnd.size();
 
   for (auto i = 0; i < s.s_T.rows(); i++)
