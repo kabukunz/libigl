@@ -274,24 +274,24 @@ if(LIBIGL_WITH_MMG)
     list(APPEND CMAKE_MODULE_PATH "${LIBIGL_EXTERNAL}/mmg/cmake/tools")
 
     # have mmg dir from prebuilt
-    set(MMG_DIR "${CMAKE_BINARY_DIR}/prebuilt/mmg" CACHE STRING "MMG PREBUILT" FORCE)
+    # set(MMG_DIR "${CMAKE_BINARY_DIR}/prebuilt/mmg" CACHE STRING "MMG PREBUILT" FORCE)
     
     # find package
     find_package(MMG2D)
 
   endif()
   compile_igl_module("mmg")
-  target_link_libraries(igl_mmg ${IGL_SCOPE} ${MMG2D_LIBRARY})
-  target_include_directories(igl_mmg ${IGL_SCOPE} ${MMG2D_INCLUDE_DIR})
-  message(WARNING ${MMG2D_INCLUDE_DIR})
-  message(WARNING ${MMG2D_LIBRARY})
+  target_link_libraries(igl_mmg ${IGL_SCOPE} ${MMG2D_LIBRARIES})
+  target_include_directories(igl_mmg ${IGL_SCOPE} ${MMG2D_INCLUDE_DIRS})
+  message(WARNING ${MMG2D_INCLUDE_DIRS})
+  message(WARNING ${MMG2D_LIBRARIES})
   target_compile_definitions(igl_mmg ${IGL_SCOPE} -DLIBIGL_WITH_MMG)
   set(LIBIGL_WITH_TRIANGLE OFF CACHE BOOL "" FORCE)
 endif()
 
 function(igl_copy_mmg_dll target)
   if(WIN32 AND LIBIGL_WITH_MMG)
-    igl_copy_imported_dll(${MMG2D_LIBRARY} ${target})
+    igl_copy_imported_dll(${MMG2D_LIBRARIES} ${target})
   endif()
 endfunction()
 
