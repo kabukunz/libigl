@@ -1,9 +1,9 @@
 #!/bin/bash
 
-LIBIGL_DIR=/Users/max/Developer/Library/Graphics/libiglmmg/libigl
+# FIXME: missing download
+
 MMG_SOURCEDIR=external/mmg
 MMG_BUILDDIR=build/prebuilt/mmg
-# MMG_INSTALLDIR=$LIBIGL_DIR/install
 
 MMG_BUILDTYPE=Release
 
@@ -17,9 +17,6 @@ cmake -S $MMG_SOURCEDIR -B $MMG_BUILDDIR \
 -DUSE_ELAS=OFF \
 -DUSE_VTK=OFF \
 -DMMG2D_CI=OFF \
--DBUILD_TESTING=OFF \
--DCMAKE_INSTALL_PREFIX:PATH=$MMG_INSTALLDIR
+-DBUILD_TESTING=OFF 
 
 make -C $MMG_BUILDDIR
-
-# make -C $MMG_BUILDDIR install
