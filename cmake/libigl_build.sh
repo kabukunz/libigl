@@ -1,12 +1,7 @@
 #!/bin/bash
 
-LIBIGL_DIR=/Users/max/Developer/Library/Graphics/libiglmmg/libigl
-
-LIBIGL_BUILDTYPE=Release
-
-cmake -S $LIBIGL_DIR -B build \
--DMMG_DIR=/Users/max/Developer/Library/Graphics/libiglmmg/libigl/build/prebuilt/mmg \
--DCMAKE_BUILD_TYPE=$LIBIGL_BUILDTYPE \
+cmake -S . -B build \
+-DCMAKE_BUILD_TYPE=Release \
 -DLIBIGL_WITH_MMG=ON \
 -DBUILD_SHARED_LIBS=ON \
 -DLIBIGL_BUILD_TESTS=OFF \
