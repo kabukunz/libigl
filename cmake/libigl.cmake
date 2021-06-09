@@ -270,27 +270,25 @@ endfunction()
 if(LIBIGL_WITH_MMG)  
   if(NOT TARGET mmg)
 
-    # add_custom_target(MMG_PREBUILT)
+    add_custom_target(MMG_PREBUILT)
 
-    # add_custom_command(TARGET MMG_PREBUILT
-    # PRE_BUILD
-    # COMMAND /bin/sh "${LIBIGL_ROOT}/cmake/mmg_prebuilt.sh"
-    # )    
+    add_custom_command(TARGET MMG_PREBUILT
+    PRE_BUILD
+    COMMAND /bin/sh "${LIBIGL_ROOT}/cmake/mmg_prebuilt.sh"
+    )    
 
     list(APPEND CMAKE_MODULE_PATH "${LIBIGL_EXTERNAL}/mmg/cmake/tools")
 
-  # have mmg dir from prebuilt
-  # set(MMG_DIR "${CMAKE_BINARY_DIR}/prebuilt/mmg" CACHE STRING "MMG PREBUILT" FORCE)
+    # have mmg dir from prebuilt
+    # set(MMG_DIR "${CMAKE_BINARY_DIR}/prebuilt/mmg" CACHE STRING "MMG PREBUILT" FORCE)
   
-  # find package (CONFIG doesn't work)
+    # add subdirectory doesn't work, find package config neither. Resorting to external prebuilt
     find_package(MMG2D)
 
   endif()
   compile_igl_module("mmg")
   target_link_libraries(igl_mmg ${IGL_SCOPE} ${MMG2D_LIBRARIES})
   target_include_directories(igl_mmg ${IGL_SCOPE} ${MMG2D_INCLUDE_DIRS})
-  message(WARNING ${MMG2D_INCLUDE_DIRS})
-  message(WARNING ${MMG2D_LIBRARIES})
   target_compile_definitions(igl_mmg ${IGL_SCOPE} -DLIBIGL_WITH_MMG)
 endif()
 
