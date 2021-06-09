@@ -269,35 +269,15 @@ endfunction()
 ### Compile the MMG part ###
 if(LIBIGL_WITH_MMG)  
   if(NOT TARGET mmg)
+    igl_download_mmg()
   
+    set(MMG_SOURCEDIR "${LIBIGL_EXTERNAL}/mmg")
     set(MMG_DIR "${CMAKE_BINARY_DIR}/prebuilt/mmg" CACHE STRING "MMG PREBUILT" FORCE)
 
-    # setting options and using add_subdirectory doesn't work.
-    execute_process(COMMAND "${LIBIGL_ROOT}/cmake/mmg_prebuilt.sh")
-
-    # add_custom_target(MMG_PREBUILT)
-
-    # add_executable(MMGEXAMPLE "${LIBIGL_EXTERNAL}/mmg/libexamples/mmg2d/adaptation_example0/example0_a/main.c")
-
-    # add_custom_command(TARGET MMGEXAMPLE
-    # PRE_BUILD
-    # COMMAND /bin/sh "${LIBIGL_ROOT}/cmake/mmg_prebuilt.sh")    
+    # setting options and using add_subdirectory doesn't work
+    execute_process(COMMAND "${LIBIGL_ROOT}/cmake/mmg_prebuilt.sh" "${MMG_SOURCEDIR}" "${MMG_DIR}" "${CMAKE_BUILD_TYPE}")
     
-    # add_custom_target(
-    #     MMGEXAMPLE ALL
-    #     COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/hello.py ${CMAKE_CURRENT_SOURCE_DIR}
-    #     BYPRODUCTS enums.h
-    #     COMMENT "Generating enums"
-    #    )
-
-    # target_include_directories(MMGEXAMPLE PUBLIC ${MMG2D_INCLUDE_DIRS})    
-    # target_link_libraries(MMGEXAMPLE PUBLIC ${MMG2D_LIBRARIES})
-    # set_target_properties(MMGEXAMPLE PROPERTIES BINARY_OUTPUT_DIRECTORY ${MMG_DIR})
-    
-    
-    list(APPEND CMAKE_MODULE_PATH "${LIBIGL_EXTERNAL}/mmg/cmake/tools")
-
-    # have mmg dir from prebuilt
+    list(APPEND CMAKE_MODULE_PATH "${MMG_SOURCEDIR}/cmake/tools")
   
     # add subdirectory doesn't work, find package config neither. Resorting to external prebuilt
     find_package(MMG2D REQUIRED)
