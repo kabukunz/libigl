@@ -265,21 +265,37 @@ function(igl_copy_cgal_dll target)
   endif()
 endfunction()
 
+
 ################################################################################
 ### Compile the MMG part ###
 if(LIBIGL_WITH_MMG)  
   if(NOT TARGET mmg)
     igl_download_mmg()
   
-    set(MMG_SOURCEDIR "${LIBIGL_EXTERNAL}/mmg")
-    set(MMG_DIR "${CMAKE_BINARY_DIR}/prebuilt/mmg" CACHE STRING "MMG PREBUILT" FORCE)
+    # https://stackoverflow.com/questions/56863347/cmake-how-to-make-execute-process-wait-for-subdirectory-to-finish
+    # add subdirectory doesn't work, find package config on installed lib neither. Resorting to external prebuilt
+    execute_process(COMMAND ${CMAKE_COMMAND}
+    -S "${LIBIGL_EXTERNAL}/mmg"
+    -B "${CMAKE_BINARY_DIR}/prebuilt/mmg"
+    -G ${CMAKE_GENERATOR}
+    -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+    -DBUILD=MMG2D
+    -DBUILD_SHARED_LIBS=ON
+    -DLIBMMG2D_STATIC=ON
+    -DLIBMMG2D_SHARED=ON
+    -DUSE_SCOTCH=OFF
+    -DUSE_ELAS=OFF
+    -DUSE_VTK=OFF
+    -DMMG2D_CI=OFF
+    -DBUILD_TESTING=OFF
+    )
 
-    # setting options and using add_subdirectory doesn't work
-    execute_process(COMMAND "${LIBIGL_ROOT}/cmake/mmg_prebuilt.sh" "${MMG_SOURCEDIR}" "${MMG_DIR}" "${CMAKE_BUILD_TYPE}")
-    
-    list(APPEND CMAKE_MODULE_PATH "${MMG_SOURCEDIR}/cmake/tools")
+    execute_process(COMMAND ${CMAKE_COMMAND}
+    --build "${CMAKE_BINARY_DIR}/prebuilt/mmg"
+    )    
   
-    # add subdirectory doesn't work, find package config neither. Resorting to external prebuilt
+    list(APPEND CMAKE_MODULE_PATH "${LIBIGL_EXTERNAL}/mmg/cmake/tools")
+    set(MMG_DIR "${CMAKE_BINARY_DIR}/prebuilt/mmg" CACHE STRING "MMG DIR" FORCE)      
     find_package(MMG2D REQUIRED)
 
   endif()
@@ -291,9 +307,24 @@ endif()
 
 function(igl_copy_mmg_dll target)
   if(WIN32 AND LIBIGL_WITH_MMG)
-    igl_copy_imported_dll(${MMG2D_LIBRARIES} ${target})
+    igl_copy_some_dll(${MMG2D_LIBRARIES} ${target})
   endif()
 endfunction()
+
+# Helper function for `igl_copy_cgal_dll()`
+function(igl_copy_some_dll src_target dst_target)
+  get_target_property(other_libs ${src_target} LINK_INTERFACE_LIBRARIES)
+  set(locations)
+  list(APPEND locations ${main_lib} ${other_libs})
+  foreach(location ${locations})
+    string(REGEX MATCH "^(.*)\\.[^.]*$" dummy ${location})
+    set(location "${CMAKE_MATCH_1}.dll")
+    if(EXISTS "${location}" AND location MATCHES "^.*\\.dll$")
+      add_custom_command(TARGET ${dst_target} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different "${location}" $<TARGET_FILE_DIR:${dst_target}>)
+    endif()
+  endforeach()
+endfunction()
+
 
 ################################################################################
 ### Compile the CoMISo part ###
