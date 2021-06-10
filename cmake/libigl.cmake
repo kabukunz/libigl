@@ -307,13 +307,13 @@ endif()
 
 function(igl_copy_mmg_dll target)
   if(WIN32 AND LIBIGL_WITH_MMG)
-    igl_copy_some_dll(${MMG2D_LIBRARIES} ${target})
+    igl_copy_some_dll(Mmg::libmmg2d_so ${target})
   endif()
 endfunction()
 
 # Helper function for `igl_copy_cgal_dll()`
 function(igl_copy_some_dll src_target dst_target)
-  get_target_property(other_libs ${src_target} LINK_INTERFACE_LIBRARIES)
+  get_target_property(other_libs ${src_target} INTERFACE_LINK_LIBRARIES)
   set(locations)
   list(APPEND locations ${main_lib} ${other_libs})
   foreach(location ${locations})
