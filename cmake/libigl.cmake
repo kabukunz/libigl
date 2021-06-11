@@ -280,7 +280,7 @@ if(LIBIGL_WITH_MMG)
     -G ${CMAKE_GENERATOR}
     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
     -DBUILD=MMG2D
-    -DBUILD_SHARED_LIBS=ON
+    -DBUILD_SHARED_LIBS=OFF
     -DLIBMMG2D_STATIC=ON
     -DLIBMMG2D_SHARED=ON
     -DUSE_SCOTCH=OFF
@@ -307,7 +307,7 @@ endif()
 
 function(igl_copy_mmg_dll target)
   if(WIN32 AND LIBIGL_WITH_MMG)
-    igl_copy_some_dll(Mmg::libmmg2d_so ${target})
+    igl_copy_some_dll(libmmg2d_so ${target})
   endif()
 endfunction()
 
