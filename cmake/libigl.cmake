@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.15)
 
 # https://github.com/libigl/libigl/issues/751
 # http://lists.llvm.org/pipermail/llvm-commits/Week-of-Mon-20160425/351643.html
@@ -281,7 +281,7 @@ if(LIBIGL_WITH_MMG)
     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
     -DBUILD=MMG2D
     -DBUILD_SHARED_LIBS=OFF
-    -DLIBMMG2D_STATIC=ON
+    -DLIBMMG2D_STATIC=OFF
     -DLIBMMG2D_SHARED=ON
     -DUSE_SCOTCH=OFF
     -DUSE_ELAS=OFF
@@ -293,6 +293,13 @@ if(LIBIGL_WITH_MMG)
     execute_process(COMMAND ${CMAKE_COMMAND}
     --build "${CMAKE_BINARY_DIR}/prebuilt/mmg"
     )    
+
+    execute_process(COMMAND ${CMAKE_COMMAND}
+    --install "${CMAKE_BINARY_DIR}/prebuilt/mmg"
+    --config "${CMAKE_BUILD_TYPE}"
+    --prefix "${LIBIGL_ROOT}/install"
+    )    
+
   
     list(APPEND CMAKE_MODULE_PATH "${LIBIGL_EXTERNAL}/mmg/cmake/tools")
     set(MMG_DIR "${CMAKE_BINARY_DIR}/prebuilt/mmg" CACHE STRING "MMG DIR" FORCE)      
