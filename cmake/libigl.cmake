@@ -279,15 +279,13 @@ if(LIBIGL_WITH_MMG)
     -B "${CMAKE_BINARY_DIR}/prebuilt/mmg"
     -G ${CMAKE_GENERATOR}
     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+    -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON
     -DBUILD=MMG2D
-    -DBUILD_SHARED_LIBS=OFF
-    -DLIBMMG2D_STATIC=OFF
+    -DLIBMMG2D_STATIC=ON
     -DLIBMMG2D_SHARED=ON
     -DUSE_SCOTCH=OFF
     -DUSE_ELAS=OFF
     -DUSE_VTK=OFF
-    -DMMG2D_CI=OFF
-    -DBUILD_TESTING=OFF
     )
 
     execute_process(COMMAND ${CMAKE_COMMAND}
@@ -314,23 +312,23 @@ endif()
 
 function(igl_copy_mmg_dll target)
   if(WIN32 AND LIBIGL_WITH_MMG)
-    igl_copy_some_dll(libmmg2d_so ${target})
+    # igl_copy_imported_dll(${MMG2D_LIBRARIES} ${target})
   endif()
 endfunction()
 
-# Helper function for `igl_copy_cgal_dll()`
-function(igl_copy_some_dll src_target dst_target)
-  get_target_property(other_libs ${src_target} INTERFACE_LINK_LIBRARIES)
-  set(locations)
-  list(APPEND locations ${main_lib} ${other_libs})
-  foreach(location ${locations})
-    string(REGEX MATCH "^(.*)\\.[^.]*$" dummy ${location})
-    set(location "${CMAKE_MATCH_1}.dll")
-    if(EXISTS "${location}" AND location MATCHES "^.*\\.dll$")
-      add_custom_command(TARGET ${dst_target} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different "${location}" $<TARGET_FILE_DIR:${dst_target}>)
-    endif()
-  endforeach()
-endfunction()
+# # Helper function for `igl_copy_cgal_dll()`
+# function(igl_copy_some_dll src_target dst_target)
+#   get_target_property(other_libs ${src_target} INTERFACE_LINK_LIBRARIES)
+#   set(locations)
+#   list(APPEND locations ${main_lib} ${other_libs})
+#   foreach(location ${locations})
+#     string(REGEX MATCH "^(.*)\\.[^.]*$" dummy ${location})
+#     set(location "${CMAKE_MATCH_1}.dll")
+#     if(EXISTS "${location}" AND location MATCHES "^.*\\.dll$")
+#       add_custom_command(TARGET ${dst_target} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different "${location}" $<TARGET_FILE_DIR:${dst_target}>)
+#     endif()
+#   endforeach()
+# endfunction()
 
 
 ################################################################################
