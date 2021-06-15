@@ -272,11 +272,22 @@ if(LIBIGL_WITH_MMG)
   if(NOT TARGET mmg)
     igl_download_mmg()
   
-    # https://stackoverflow.com/questions/56863347/cmake-how-to-make-execute-process-wait-for-subdirectory-to-finish
-    # add subdirectory doesn't work, find package config on installed lib neither. Resorting to external prebuilt
+    # mmg dir
+    set(MMG_DIR "${CMAKE_BINARY_DIR}/mmg" CACHE STRING "MMG DIR" FORCE)
+    message(STATUS "MMG_DIR: " "${MMG_DIR}")
+
+    # prevents "warning: multiple rules generate lib/mmg2d.lib."
+    # cmake --build build --target clean
+    # if(EXISTS MMG_DIR)
+    #     message()
+    # endif()
+
+    # execute_process(COMMAND ${CMAKE_COMMAND} --build "${MMG_DIR}" --target clean)
+
+    # build
     execute_process(COMMAND ${CMAKE_COMMAND}
     -S "${LIBIGL_EXTERNAL}/mmg"
-    -B "${CMAKE_BINARY_DIR}/prebuilt/mmg"
+    -B "${MMG_DIR}"
     -G ${CMAKE_GENERATOR}
     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
     -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON
@@ -288,21 +299,17 @@ if(LIBIGL_WITH_MMG)
     -DUSE_VTK=OFF
     )
 
-    execute_process(COMMAND ${CMAKE_COMMAND}
-    --build "${CMAKE_BINARY_DIR}/prebuilt/mmg"
-    )    
+    execute_process(COMMAND ${CMAKE_COMMAND} --build "${MMG_DIR}")
 
-    execute_process(COMMAND ${CMAKE_COMMAND}
-    --install "${CMAKE_BINARY_DIR}/prebuilt/mmg"
-    --config "${CMAKE_BUILD_TYPE}"
-    --prefix "${LIBIGL_ROOT}/install"
-    )    
-
-  
     list(APPEND CMAKE_MODULE_PATH "${LIBIGL_EXTERNAL}/mmg/cmake/tools")
-    set(MMG_DIR "${CMAKE_BINARY_DIR}/prebuilt/mmg" CACHE STRING "MMG DIR" FORCE)      
+
+    # Only old-style find package works
     find_package(MMG2D REQUIRED)
 
+    # add dll
+    add_library(MMG2D_DLL SHARED IMPORTED)
+    set_property(TARGET MMG2D_DLL PROPERTY IMPORTED_LOCATION "${MMG_DIR}/lib/mmg2d.dll")
+            
   endif()
   compile_igl_module("mmg")
   target_link_libraries(igl_mmg ${IGL_SCOPE} ${MMG2D_LIBRARIES})
@@ -312,23 +319,12 @@ endif()
 
 function(igl_copy_mmg_dll target)
   if(WIN32 AND LIBIGL_WITH_MMG)
-    # igl_copy_imported_dll(${MMG2D_LIBRARIES} ${target})
+    # igl_copy_imported_dll(${MMG2D_DLL} ${target})
+    add_custom_command(TARGET ${target} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:MMG2D_DLL> $<TARGET_FILE_DIR:${target}>
+    )
   endif()
 endfunction()
-
-# # Helper function for `igl_copy_cgal_dll()`
-# function(igl_copy_some_dll src_target dst_target)
-#   get_target_property(other_libs ${src_target} INTERFACE_LINK_LIBRARIES)
-#   set(locations)
-#   list(APPEND locations ${main_lib} ${other_libs})
-#   foreach(location ${locations})
-#     string(REGEX MATCH "^(.*)\\.[^.]*$" dummy ${location})
-#     set(location "${CMAKE_MATCH_1}.dll")
-#     if(EXISTS "${location}" AND location MATCHES "^.*\\.dll$")
-#       add_custom_command(TARGET ${dst_target} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different "${location}" $<TARGET_FILE_DIR:${dst_target}>)
-#     endif()
-#   endforeach()
-# endfunction()
 
 
 ################################################################################
