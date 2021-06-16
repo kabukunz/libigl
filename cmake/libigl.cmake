@@ -277,9 +277,24 @@ if(LIBIGL_WITH_MMG)
     message(STATUS "MMG_DIR: " "${MMG_DIR}")
 
     # mmg build in both static and shared library mode causes mmg2d.lib overwriting
-    execute_process(COMMAND ${CMAKE_COMMAND} --build "${MMG_DIR}" --target clean)
+    # execute_process(COMMAND ${CMAKE_COMMAND} --build "${MMG_DIR}" --target clean)
+    
+    if(LIBMMG2D_STATIC AND LIBMMG2D_SHARED)
+      message(FATAL_ERROR "MMG2D cannot build both static and shared libraries")
+    endif()
 
-    # build
+    set(LIBIGL_LIBMMG2D_STATIC ${LIBMMG2D_STATIC})
+    set(LIBIGL_LIBMMG2D_SHARED ${LIBMMG2D_SHARED})
+
+    # check static libigl
+    if(LIBIGL_USE_STATIC_LIBRARY)
+      set(LIBIGL_LIBMMG2D_STATIC ON)
+      set(LIBIGL_LIBMMG2D_SHARED OFF)
+      message(WARNING "Forcing MMG2D static library build because of libigl static library option")
+    endif()  
+
+    # neither add_subdirectory nor find_library config work wiht MMG
+    # bulding as installed library flavor
     execute_process(COMMAND ${CMAKE_COMMAND}
     -S "${LIBIGL_EXTERNAL}/mmg"
     -B "${MMG_DIR}"
@@ -287,8 +302,8 @@ if(LIBIGL_WITH_MMG)
     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
     -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON
     -DBUILD=MMG2D
-    -DLIBMMG2D_STATIC=ON
-    -DLIBMMG2D_SHARED=ON
+    -DLIBMMG2D_STATIC=${LIBIGL_LIBMMG2D_STATIC}
+    -DLIBMMG2D_SHARED=${LIBIGL_LIBMMG2D_SHARED}
     -DUSE_SCOTCH=OFF
     -DUSE_ELAS=OFF
     -DUSE_VTK=OFF
