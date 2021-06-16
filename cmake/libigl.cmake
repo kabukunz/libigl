@@ -313,7 +313,6 @@ endif()
 
 function(igl_copy_mmg_dll target)
   if(WIN32 AND LIBIGL_WITH_MMG)
-    # igl_copy_imported_dll(${MMG2D_DLL} ${target})
     add_custom_command(TARGET ${target} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:MMG2D_DLL> $<TARGET_FILE_DIR:${target}>
     )
