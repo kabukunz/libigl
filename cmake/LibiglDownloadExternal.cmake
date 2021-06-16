@@ -169,10 +169,9 @@ function(igl_download_predicates)
 endfunction()
 
 ## mmg
-# FIXME: change to new repository 
 function(igl_download_mmg)
     igl_download_project(mmg
-		GIT_REPOSITORY https://github.com/kabukunz/mmg.git
+		GIT_REPOSITORY https://github.com/MmgTools/mmg.git
 		GIT_TAG        379209a9bb9b52df5e7a6ca08ae366bf1991960f
 		)
 endfunction()
