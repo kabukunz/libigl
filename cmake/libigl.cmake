@@ -276,13 +276,7 @@ if(LIBIGL_WITH_MMG)
     set(MMG_DIR "${CMAKE_BINARY_DIR}/mmg" CACHE STRING "MMG DIR" FORCE)
     message(STATUS "MMG_DIR: " "${MMG_DIR}")
 
-    # prevents "warning: multiple rules generate lib/mmg2d.lib."
-    # cmake --build build --target clean
-    # if(EXISTS MMG_DIR)
-    #     message()
-    # endif()
-
-    # execute_process(COMMAND ${CMAKE_COMMAND} --build "${MMG_DIR}" --target clean)
+    # warning: mmg build in both static and shared library mode overwrites mmg2d.lib 
 
     # build
     execute_process(COMMAND ${CMAKE_COMMAND}
