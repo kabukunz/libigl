@@ -7,14 +7,12 @@
 // obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifdef LIBIGL_WITH_MMG
-  #include <igl/mmg/triangulate.h>
+#include <igl/mmg/triangulate.h>
 #endif
 
-#ifndef LIBIGL_WITH_MMG
-  #ifdef LIBIGL_WITH_TRIANGLE
-    #include <igl/triangle/triangulate.h>
-  #endif  
-#endif
+#ifdef LIBIGL_WITH_TRIANGLE
+#include <igl/triangle/triangulate.h>
+#endif  
 
 #include "scaf.h"
 #include <Eigen/Dense>
@@ -229,11 +227,9 @@ void mesh_improve(igl::SCAFData &s)
   igl::mmg::triangulate(V, E, H, uv2, s.s_T);
 #endif
 
-#ifndef LIBIGL_WITH_MMG
-  #ifdef LIBIGL_WITH_TRIANGLE
-    igl::triangle::triangulate(V, E, H, std::basic_string<char>("qYYQ"), uv2, s.s_T);
-  #endif  
-#endif
+#ifdef LIBIGL_WITH_TRIANGLE
+  igl::triangle::triangulate(V, E, H, std::basic_string<char>("qYYQ"), uv2, s.s_T);
+#endif  
 
   auto bnd_n = s.internal_bnd.size();
 

@@ -42,6 +42,12 @@ if(LIBIGL_BUILD_PYTHON)
   message(FATAL_ERROR "Python bindings have been removed in this version. Please use an older version of libigl, or wait for the new bindings to be released.")
 endif()
 
+if(LIBIGL_WITH_MMG AND LIBIGL_WITH_TRIANGLE)
+  message(WARNING "Cannot build both MMG and Triangle for CDT. Defaulting to Triangle")
+  set(LIBIGL_WITH_MMG OFF CACHE BOOL "" FORCE)
+endif()
+
+
 ################################################################################
 
 ### Configuration
@@ -273,12 +279,19 @@ if(LIBIGL_WITH_MMG)
     igl_download_mmg()
   
     # mmg dir
-    set(MMG_DIR "${CMAKE_BINARY_DIR}/mmg" CACHE STRING "MMG DIR" FORCE)
+    set(MMG_DIR "${CMAKE_BINARY_DIR}/mmg")
     message(STATUS "MMG_DIR: " "${MMG_DIR}")
 
-    # mmg build in both static and shared library mode causes mmg2d.lib overwriting
+    # mmg build in both static and shared library mode causes mmg2d.lib overwriting 
+    # and building errors if two successive builds are called. kind of builds are ruled out
+    # below, otherwise uncomment this clean line (slow, of course)
     # execute_process(COMMAND ${CMAKE_COMMAND} --build "${MMG_DIR}" --target clean)
     
+    # mmg2d_O3.exe is always built static and fails if static library is missing
+
+    # set(LIBIGL_LIBMMG2D_STATIC ON)
+    # set(LIBIGL_LIBMMG2D_SHARED OFF)
+
     if(LIBMMG2D_STATIC AND LIBMMG2D_SHARED)
       message(FATAL_ERROR "MMG2D cannot build both static and shared libraries")
     endif()
@@ -294,7 +307,7 @@ if(LIBIGL_WITH_MMG)
     endif()  
 
     # neither add_subdirectory nor find_library config work wiht MMG
-    # bulding as installed library flavor
+    # bulding as preinstalled library flavor
     execute_process(COMMAND ${CMAKE_COMMAND}
     -S "${LIBIGL_EXTERNAL}/mmg"
     -B "${MMG_DIR}"
@@ -313,7 +326,7 @@ if(LIBIGL_WITH_MMG)
 
     list(APPEND CMAKE_MODULE_PATH "${LIBIGL_EXTERNAL}/mmg/cmake/tools")
 
-    # Only old-style find package works
+    # old-style find package
     find_package(MMG2D REQUIRED)
 
     # add dll
@@ -513,6 +526,7 @@ if(LIBIGL_WITH_TRIANGLE)
   compile_igl_module("triangle")
   target_link_libraries(igl_triangle ${IGL_SCOPE} triangle)
   target_include_directories(igl_triangle ${IGL_SCOPE} ${TRIANGLE_DIR})
+  target_compile_definitions(igl_triangle ${IGL_SCOPE} -DLIBIGL_WITH_TRIANGLE)
 endif()
 
 ################################################################################
