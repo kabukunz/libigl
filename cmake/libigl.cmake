@@ -271,10 +271,8 @@ function(igl_copy_cgal_dll target)
   endif()
 endfunction()
 
-
 ################################################################################
 ### Compile the MMG part ###
-
 function(mmg_prebuild sourcedir builddir libstatic libshared)
     # config 
     execute_process(COMMAND ${CMAKE_COMMAND}
@@ -294,7 +292,6 @@ function(mmg_prebuild sourcedir builddir libstatic libshared)
     execute_process(COMMAND ${CMAKE_COMMAND} --build "${builddir}")
 endfunction()
 
-
 if(LIBIGL_WITH_MMG)  
   if(NOT TARGET mmg)
     igl_download_mmg()
@@ -304,7 +301,7 @@ if(LIBIGL_WITH_MMG)
     message(STATUS "MMG_DIR: " "${MMG_DIR}")
 
     # mmg build in both static and shared library mode causes static mmg2d.lib to be overwritten
-    # mmg2d_O3.exe is always built static and fails if static library is missing. libs are ok
+    # mmg2d_O3.exe is always built static and build fails if static library is missing. libs are ok
     set(LIBMMG2D_STATIC OFF)
     set(LIBMMG2D_SHARED ON)
 
@@ -342,7 +339,6 @@ function(igl_copy_mmg_dll target)
     )
   endif()
 endfunction()
-
 
 ################################################################################
 ### Compile the CoMISo part ###
