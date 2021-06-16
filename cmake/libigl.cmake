@@ -279,31 +279,31 @@ if(LIBIGL_WITH_MMG)
     igl_download_mmg()
   
     # mmg dir
-    set(MMG_DIR "${CMAKE_BINARY_DIR}/mmg")
+    set(MMG_DIR "${CMAKE_BINARY_DIR}/mmg" CACHE STRING "MMG DIR" FORCE)
     message(STATUS "MMG_DIR: " "${MMG_DIR}")
 
     # mmg build in both static and shared library mode causes mmg2d.lib overwriting 
     # and building errors if two successive builds are called. kind of builds are ruled out
     # below, otherwise uncomment this clean line (slow, of course)
-    # execute_process(COMMAND ${CMAKE_COMMAND} --build "${MMG_DIR}" --target clean)
+    execute_process(COMMAND ${CMAKE_COMMAND} --build "${MMG_DIR}" --target clean)
     
     # mmg2d_O3.exe is always built static and fails if static library is missing
 
-    # set(LIBIGL_LIBMMG2D_STATIC ON)
-    # set(LIBIGL_LIBMMG2D_SHARED OFF)
+    set(LIBIGL_LIBMMG2D_STATIC ON)
+    set(LIBIGL_LIBMMG2D_SHARED OFF)
 
-    if(LIBMMG2D_STATIC AND LIBMMG2D_SHARED)
-      message(FATAL_ERROR "MMG2D cannot build both static and shared libraries")
-    endif()
+    # if(LIBMMG2D_STATIC AND LIBMMG2D_SHARED)
+    #   message(FATAL_ERROR "MMG2D cannot build both static and shared libraries")
+    # endif()
 
-    set(LIBIGL_LIBMMG2D_STATIC ${LIBMMG2D_STATIC})
-    set(LIBIGL_LIBMMG2D_SHARED ${LIBMMG2D_SHARED})
+    # set(LIBIGL_LIBMMG2D_STATIC ${LIBMMG2D_STATIC})
+    # set(LIBIGL_LIBMMG2D_SHARED ${LIBMMG2D_SHARED})
 
-    # check static libigl
-    if(LIBIGL_USE_STATIC_LIBRARY)
+    # check static libigl build
+    if(NOT LIBIGL_USE_STATIC_LIBRARY)
       set(LIBIGL_LIBMMG2D_STATIC ON)
-      set(LIBIGL_LIBMMG2D_SHARED OFF)
-      message(WARNING "Forcing MMG2D static library build because of libigl static library option")
+      set(LIBIGL_LIBMMG2D_SHARED ON)
+    #   message(WARNING "Forcing MMG2D static library build because of libigl static library option")
     endif()  
 
     # neither add_subdirectory nor find_library config work wiht MMG
