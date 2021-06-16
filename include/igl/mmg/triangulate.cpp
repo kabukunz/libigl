@@ -6,6 +6,8 @@
 // v. 2.0. If a copy of the MPL was not distributed with this file, You can
 // obtain one at http://mozilla.org/MPL/2.0/.
 
+#include "triangulate.h"
+
 #include "mmg/mmg2d/libmmg2d.h"
 
 template <
@@ -26,10 +28,6 @@ IGL_INLINE bool igl::mmg::triangulate(
     // V, E are required for Scaf
     assert(V.rows() > 0 && "Vertices matrix is empty");
     assert(E.rows() > 0 && "Edges matrix is empty");
-
-    // CHECK: Scaf does not support holes 
-    // and does virtual hole fill if any is found,
-    // so we do not use holes here for now
 
     // vars
     MMG5_pMesh mesh = NULL;
@@ -193,6 +191,9 @@ template bool igl::mmg::triangulate<
     Eigen::Matrix<double, -1, -1, 1, -1, -1>, 
     Eigen::Matrix<double, -1, -1, 1, -1, -1>, 
     Eigen::Matrix<int, -1, -1, 0, -1, -1> >(
-    Eigen::MatrixBase<Eigen::Matrix<double, -1, -1, 1, -1, -1> > const&, Eigen::MatrixBase<Eigen::Matrix<int, -1, -1, 0, -1, -1> > const&, Eigen::MatrixBase<Eigen::Matrix<double, -1, -1, 1, -1, -1> > const&, 
-    Eigen::PlainObjectBase<Eigen::Matrix<double, -1, -1, 1, -1, -1> >&, Eigen::PlainObjectBase<Eigen::Matrix<int, -1, -1, 0, -1, -1> >&);
+    Eigen::MatrixBase<Eigen::Matrix<double, -1, -1, 1, -1, -1> > const&, 
+    Eigen::MatrixBase<Eigen::Matrix<int, -1, -1, 0, -1, -1> > const&, 
+    Eigen::MatrixBase<Eigen::Matrix<double, -1, -1, 1, -1, -1> > const&, 
+    Eigen::PlainObjectBase<Eigen::Matrix<double, -1, -1, 1, -1, -1> >&, 
+    Eigen::PlainObjectBase<Eigen::Matrix<int, -1, -1, 0, -1, -1> >&);
 #endif

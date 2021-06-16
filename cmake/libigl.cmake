@@ -276,7 +276,8 @@ if(LIBIGL_WITH_MMG)
     set(MMG_DIR "${CMAKE_BINARY_DIR}/mmg" CACHE STRING "MMG DIR" FORCE)
     message(STATUS "MMG_DIR: " "${MMG_DIR}")
 
-    # warning: mmg build in both static and shared library mode overwrites mmg2d.lib 
+    # mmg build in both static and shared library mode causes mmg2d.lib overwriting
+    execute_process(COMMAND ${CMAKE_COMMAND} --build "${MMG_DIR}" --target clean)
 
     # build
     execute_process(COMMAND ${CMAKE_COMMAND}
