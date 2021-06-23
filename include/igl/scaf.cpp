@@ -15,6 +15,7 @@
 #endif  
 
 #include "scaf.h"
+
 #include <Eigen/Dense>
 #include <Eigen/IterativeLinearSolvers>
 #include <Eigen/Sparse>
