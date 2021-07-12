@@ -290,7 +290,7 @@ if(LIBIGL_WITH_MMG)
     include(PrebuildExternalProject)
 
     # tools source directory (if needed, i.e. already downloaded)
-    set(THIRDPARTY_DIR "${CMAKE_SOURCE_DIR}/third-party")
+    set(THIRDPARTY_DIR "${CMAKE_SOURCE_DIR}/external")
         
     # install directory (if different from cmake default install prefix)
     set(PREBUILT_DIR "${CMAKE_SOURCE_DIR}/prebuilt")
