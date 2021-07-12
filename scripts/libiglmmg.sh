@@ -19,4 +19,4 @@ cmake -S . -B build -G Ninja \
 -DTUTORIALS_CHAPTER5=OFF \
 -DTUTORIALS_CHAPTER6=OFF
 
-cmake --build build
+# cmake --build build
