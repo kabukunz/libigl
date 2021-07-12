@@ -273,20 +273,8 @@ endfunction()
 
 ################################################################################
 ### Compile the MMG part ###
-
-
 if(LIBIGL_WITH_MMG)  
   if(NOT TARGET mmg)
-    # igl_download_mmg()
-  
-    # # mmg dir
-    # set(MMG_DIR "${CMAKE_BINARY_DIR}/mmg" CACHE STRING "MMG DIR" FORCE)
-    # message(STATUS "MMG_DIR: " "${MMG_DIR}")
-
-    # mmg build in both static and shared library mode causes static mmg2d.lib to be overwritten
-    # mmg2d_O3.exe is always built static and build fails if static library is missing. libs are ok
-
-
     include(PrebuildExternalProject)
 
     # tools source directory (if needed, i.e. already downloaded)
@@ -294,7 +282,6 @@ if(LIBIGL_WITH_MMG)
         
     # install directory (if different from cmake default install prefix)
     set(PREBUILT_DIR "${CMAKE_SOURCE_DIR}/prebuilt")
-    
     
     # tool name (required)
     set(TOOL_NAME mmg)
@@ -338,6 +325,9 @@ if(LIBIGL_WITH_MMG)
     list(APPEND TOOL_OPTIONS -D USE_ELAS=OFF)
     list(APPEND TOOL_OPTIONS -D USE_VTK=OFF)
 
+    # NOTE: mmg build in both static and shared library mode causes static mmg2d.lib to be overwritten
+    # mmg2d_O3.exe is always built static and build fails if static library is missing. libs are ok
+
     # check static libigl build
     if(LIBIGL_USE_STATIC_LIBRARY)
         list(APPEND TOOL_OPTIONS -D LIBMMG2D_STATIC=ON)
@@ -346,7 +336,6 @@ if(LIBIGL_WITH_MMG)
         list(APPEND TOOL_OPTIONS -D LIBMMG2D_STATIC=OFF)
         list(APPEND TOOL_OPTIONS -D LIBMMG2D_SHARED=ON)
     endif()  
-
     
     # prebuild (this is built at once; execution stops until finished)
     prebuild_external_project(
@@ -370,37 +359,11 @@ if(LIBIGL_WITH_MMG)
     
     find_package(MMG2D REQUIRED)
     
-    # add_executable(mmgs_client src/main_simple.c)
-    
-    # target_include_directories(mmgs_client PUBLIC ${MMG2D_INCLUDE_DIRS})
-    
-    # target_link_libraries(mmgs_client PUBLIC ${MMG2D_LIBRARIES})
-    
-    # set_target_properties(mmgs_client PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
-    
-
-
-    # set(LIBMMG2D_STATIC OFF)
-    # set(LIBMMG2D_SHARED ON)
-
-    # # check static libigl build
-    # if(LIBIGL_USE_STATIC_LIBRARY)
-    #   set(LIBMMG2D_STATIC ON)
-    #   set(LIBMMG2D_SHARED OFF)
-    #   message(WARNING "Forcing MMG2D static library build because of libigl static library option")
-    # endif()  
-
-    # # neither add_subdirectory nor find_library config work wiht MMG
-    # # bulding as preinstalled library
-    # mmg_prebuild("${LIBIGL_EXTERNAL}/mmg" ${MMG_DIR} ${LIBMMG2D_STATIC} ${LIBMMG2D_SHARED})
-
-    # list(APPEND CMAKE_MODULE_PATH "${LIBIGL_EXTERNAL}/mmg/cmake/tools")
-
     # old-style find package
     find_package(MMG2D REQUIRED)
-
+    
+    # add dll for copying
     if(NOT LIBIGL_USE_STATIC_LIBRARY)
-        # add dll for copying
         add_library(MMG2D_DLL SHARED IMPORTED)
         set_property(TARGET MMG2D_DLL PROPERTY IMPORTED_LOCATION "${MMG_DIR}/lib/mmg2d.dll")
     endif()
@@ -416,8 +379,7 @@ function(igl_copy_mmg_dll target)
   if(WIN32 AND LIBIGL_WITH_MMG)
     if(NOT LIBIGL_USE_STATIC_LIBRARY)
         add_custom_command(TARGET ${target} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:MMG2D_DLL> $<TARGET_FILE_DIR:${target}>
-        )
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:MMG2D_DLL> $<TARGET_FILE_DIR:${target}>)
     endif()
   endif()
 endfunction()
