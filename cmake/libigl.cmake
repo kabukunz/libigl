@@ -196,26 +196,33 @@ function(compile_igl_module module_dir)
   set_property(TARGET ${module_libname} PROPERTY EXPORT_NAME igl::${module_name})
 endfunction()
 
-function(prebuilt_igl_module module_name library_type library_dir include_dir)
+function(prebuilt_igl_module library_dir library_type include_dir)
 
+  string(REPLACE "/" "_" module_name "${library_dir}")
   if(module_name STREQUAL "core")
-    set(module_libname "igl")
+      set(module_libname "igl")
   else()
-    set(module_libname "igl_${module_name}")
+      set(module_libname "igl_${module_name}")
   endif()
+  
+  # check library type
+  if(LIBIGL_USE_STATIC_LIBRARY)
+      if(NOT library_type MATCHES "STATIC")
+          message(FATAL_ERROR "You need to use prebuilt static libraries if LIBIGL_USE_STATIC_LIBRARY is on")
+      endif()
+  endif()
+    
+  # add imported library
+  add_library(${module_name} ${library_type} IMPORTED)
+  set_property(TARGET ${module_name} PROPERTY
+      IMPORTED_LOCATION ${library_dir})
+  target_include_directories(${module_name} ${include_dir})
 
-  add_library(${module_libname} INTERFACE)
-
+  # link to libigl
   target_link_libraries(${module_libname} ${IGL_SCOPE} igl_common)
   if(NOT module_name STREQUAL "core")
     target_link_libraries(${module_libname} ${IGL_SCOPE} igl)
   endif()
-
-  # prebuilt lib
-  target_link_libraries(${module_libname} ${IGL_SCOPE} ${library_dir})
-
-  # include dirs   
-  target_include_directories(${module_libname} ${IGL_SCOPE} ${include_dir})
 
   # Alias target because it looks nicer  
   message(STATUS "Creating prebuilt target: igl::${module_name} (${module_libname})")
@@ -333,7 +340,11 @@ if(LIBIGL_WITH_EMBREE)
 
     if(LIBIGL_USE_PREBUILT_LIBRARY)
 
-        include(Trapper)
+        # list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+        
+        if(LIBIGL_USE_STATIC_LIBRARY)
+            message(FATAL_ERROR "Please use Embree prebuilt static libraries")
+        endif()
 
         # download Embree binaries
         if(WIN32)
@@ -346,11 +357,13 @@ if(LIBIGL_WITH_EMBREE)
             message(FATAL "Embree prebuilt binaries not found")
         endif()
 
+        include(Trapper)
+
         # get prebuilt version
         message("LIBIGL_EXTERNAL: ${LIBIGL_EXTERNAL}")
         trapper_add_package(embree 
-            ${EMBREE_PREBUILT_VERSION} "" 
-            INSTALL_DIR "${LIBIGL_EXTERNAL}/prebuilt"
+            ${EMBREE_PREBUILT_VERSION} ""
+            INSTALL_DIR "${LIBIGL_EXTERNAL}/prebuilt/embree"
             INSTALL_PREBUILT
         )
 
@@ -360,7 +373,10 @@ if(LIBIGL_WITH_EMBREE)
         # find Embree
         find_package(embree 3.5.2 CONFIG REQUIRED)
 
-        prebuilt_igl_module(embree STATIC ${EMBREE_LIBRARY} ${EMBREE_INCLUDE_DIRS})
+        message("EMBREE_LIBRARY: ${EMBREE_LIBRARY}")
+        message("EMBREE_INCLUDE_DIRS: ${EMBREE_INCLUDE_DIRS}")
+
+        prebuilt_igl_module(${EMBREE_LIBRARY} SHARED ${EMBREE_INCLUDE_DIRS})
     else()
 
       set(EMBREE_TESTING_INTENSITY 0 CACHE STRING "")
