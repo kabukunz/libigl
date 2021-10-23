@@ -13,7 +13,7 @@
 # 
 # Install directory with external libraries without rebuilding
 # them from source every time, in case you have to regenerate
-# your project for dev testing over and over again while using 
+# your project for dev testing over and over again while using
 # the same libraries.  
 # 
 # Those supposedly should be in your /usr/local,
@@ -29,7 +29,7 @@
 
 # ----------------------------------------------------------------------------------------------------
 
-function(trapper_add_package TOOL LOCATION HASHING)
+function(trapper_add_package PACKAGE LOCATION HASHING)
 
     # 
     # cache
@@ -97,7 +97,7 @@ function(trapper_add_package TOOL LOCATION HASHING)
 
     set(multiValues 
         INSTALL_TAGS                        # your own install tags: system_name, library version, etc.
-        TOOL_OPTIONS                        # cmake tool options
+        PACKAGE_OPTIONS                        # cmake tool options
         )
 
     include(CMakeParseArguments)
@@ -124,7 +124,7 @@ function(trapper_add_package TOOL LOCATION HASHING)
     endif()
                 
     # set minimal args
-    set(TRAPPER_TOOL ${TOOL})
+    set(TRAPPER_PACKAGE ${PACKAGE})
     set(TRAPPER_LOCATION ${LOCATION})
     set(TRAPPER_HASHING ${HASHING})
 
@@ -147,7 +147,7 @@ function(trapper_add_package TOOL LOCATION HASHING)
     #
 
     # package name is required
-    if(NOT TRAPPER_TOOL)
+    if(NOT TRAPPER_PACKAGE)
         message(FATAL_ERROR "Tool name is required")
     endif()
 
@@ -198,12 +198,12 @@ function(trapper_add_package TOOL LOCATION HASHING)
 
     # trapper package prefix options
     if(NOT TRAPPER_SKIP_CACHE_FILTER)
-        get_prefixed_cachevars(${TRAPPER_TOOL})
+        get_prefixed_cachevars(${TRAPPER_PACKAGE})
     endif()
 
     # args
-    list(APPEND TRAPPER_ARGS ${TRAPPER_TOOL_PREFIX_OPTIONS})
-    list(APPEND TRAPPER_ARGS ${TRAPPER_TOOL_OPTIONS})
+    list(APPEND TRAPPER_ARGS ${TRAPPER_PACKAGE_PREFIX_OPTIONS})
+    list(APPEND TRAPPER_ARGS ${TRAPPER_PACKAGE_OPTIONS})
     if(TRAPPER_UNPARSED_ARGUMENTS AND TRAPPER_SKIP_UNPARSED_ARGS)
         list(APPEND TRAPPER_ARGS ${TRAPPER_UNPARSED_ARGUMENTS})
     endif()
@@ -334,7 +334,7 @@ function(trapper_add_package TOOL LOCATION HASHING)
         include(ExternalProject)
 
         ExternalProject_add(
-            ${TRAPPER_TOOL}
+            ${TRAPPER_PACKAGE}
             ${TRAPPER_DOWNLOAD_DIR_COMMAND}
             ${TRAPPER_SOURCE_DIR_COMMAND}           
             ${TRAPPER_BUILD_DIR_COMMAND}
@@ -353,7 +353,7 @@ function(trapper_add_package TOOL LOCATION HASHING)
 
         add_custom_target(build_external_project)
         
-        add_dependencies(build_external_project ${TRAPPER_TOOL})
+        add_dependencies(build_external_project ${TRAPPER_PACKAGE})
         
     ")
 
@@ -362,7 +362,7 @@ function(trapper_add_package TOOL LOCATION HASHING)
     endif()
 
     set(EXTERNALPROJECTS_TAG "ExternalProjects")    
-    set(EXTERNALPROJECTS_DIR "${CMAKE_CURRENT_BINARY_DIR}/${EXTERNALPROJECTS_TAG}/${TRAPPER_TOOL}")
+    set(EXTERNALPROJECTS_DIR "${CMAKE_CURRENT_BINARY_DIR}/${EXTERNALPROJECTS_TAG}/${TRAPPER_PACKAGE}")
     set(EXTERNALPROJECTS_SCRIPT "${EXTERNALPROJECTS_DIR}/CMakeLists.txt")
 
     # check skip overwrite
@@ -420,8 +420,8 @@ macro (composite_installtags)
     # check for directory overwriting
     if(TRAPPER_DOWNLOAD_DIR OR TRAPPER_SOURCE_DIR OR TRAPPER_BUILD_DIR)
         if(NOT TRAPPER_INSTALL_TAGS)
-            message(STATUS "Trapper : added package tag name \"${TRAPPER_TOOL}\" to avoid package overwriting in working directories")
-            list(APPEND TRAPPER_INSTALL_TAGS ${TRAPPER_TOOL})
+            message(STATUS "Trapper : added package tag name \"${TRAPPER_PACKAGE}\" to avoid package overwriting in working directories")
+            list(APPEND TRAPPER_INSTALL_TAGS ${TRAPPER_PACKAGE})
         endif()
 
         list(JOIN TRAPPER_INSTALL_TAGS ${TRAPPER_INSTALL_TAGS_SEPARATOR} TRAPPER_COMP_INSTALL_TAGS)
@@ -465,7 +465,7 @@ endfunction()
 # https://stackoverflow.com/questions/44006910/how-do-i-list-cmake-user-definable-variables
 # https://stackoverflow.com/questions/32183975/how-to-print-all-the-properties-of-a-target-in-cmake
 
-# returns: TRAPPER_TOOL_PREFIX_OPTIONS, TRAPPER_CMAKE_BUILD_TYPE
+# returns: TRAPPER_PACKAGE_PREFIX_OPTIONS, TRAPPER_CMAKE_BUILD_TYPE
 function(get_prefixed_cachevars tool_name)
 
     # add cache vars with tool_name inside
@@ -477,7 +477,7 @@ function(get_prefixed_cachevars tool_name)
         message("---------------------------------------------------------")
     endif()
 
-    set(TOOL_PREFIX_OPTIONS "")
+    set(PACKAGE_PREFIX_OPTIONS "")
 
     foreach(cache_var ${cache_vars})
         get_property(cache_value CACHE ${cache_var} PROPERTY VALUE)
@@ -487,13 +487,13 @@ function(get_prefixed_cachevars tool_name)
         set(added OFF)
         # add var if prefix is in name
         if(cache_var MATCHES "${toolnamelw}" OR cache_var MATCHES "${toolnameup}")
-            list(APPEND TOOL_PREFIX_OPTIONS -D "${cache_var}=${cache_value}")
+            list(APPEND PACKAGE_PREFIX_OPTIONS -D "${cache_var}=${cache_value}")
             set(added ON)
         endif()
 
         # add var if prefix is in value
         if(cache_value MATCHES "${toolnamelw}" OR cache_value MATCHES "${toolnameup}")
-            list(APPEND TOOL_PREFIX_OPTIONS -D "${cache_var}=${cache_value}")
+            list(APPEND PACKAGE_PREFIX_OPTIONS -D "${cache_var}=${cache_value}")
             set(added ON)
         endif()
         
@@ -508,7 +508,7 @@ function(get_prefixed_cachevars tool_name)
     # dlib_client_IS_TOP_LEVEL
     # dlib_client_SOURCE_DIR
 
-    set(TRAPPER_TOOL_PREFIX_OPTIONS ${TOOL_PREFIX_OPTIONS} PARENT_SCOPE)
+    set(TRAPPER_PACKAGE_PREFIX_OPTIONS ${PACKAGE_PREFIX_OPTIONS} PARENT_SCOPE)
 
 endfunction()
 
@@ -531,8 +531,7 @@ macro(verbose)
     message(STATUS "TRAPPER CONFIGURATION")
     message("---------------------------------------------------------")
     
-    # message(STATUS "CMAKE_INSTALL_PREFIX            : ${CMAKE_INSTALL_PREFIX}           ")
-    message(STATUS "TRAPPER_TOOL                    : ${TRAPPER_TOOL}                   ")
+    message(STATUS "TRAPPER_PACKAGE                 : ${TRAPPER_PACKAGE}                ")
     message(STATUS "TRAPPER_LOCATION                : ${TRAPPER_LOCATION}               ")
     message(STATUS "TRAPPER_HASHING                 : ${TRAPPER_HASHING}                ")
     message(STATUS "TRAPPER_SKIP_OVERWRITE          : ${TRAPPER_SKIP_OVERWRITE}         ")
@@ -573,10 +572,10 @@ macro(verbose)
     if(NOT TRAPPER_SKIP_CACHE_FILTER)
 
     message("---------------------------------------------------------")
-    message(STATUS "TRAPPER_TOOL_PREFIX_OPTIONS")
+    message(STATUS "TRAPPER_PACKAGE_PREFIX_OPTIONS")
     message("---------------------------------------------------------")
 
-    foreach(option ${TRAPPER_TOOL_PREFIX_OPTIONS})
+    foreach(option ${TRAPPER_PACKAGE_PREFIX_OPTIONS})
         if(NOT option MATCHES -D)
             message(STATUS "${option}")
         endif()
@@ -585,11 +584,11 @@ macro(verbose)
     endif()
 
     message("---------------------------------------------------------")
-    message(STATUS "TRAPPER_TOOL_OPTIONS")
+    message(STATUS "TRAPPER_PACKAGE_OPTIONS")
     message("---------------------------------------------------------")
 
     set(added OFF)
-    foreach(option ${TRAPPER_TOOL_OPTIONS})
+    foreach(option ${TRAPPER_PACKAGE_OPTIONS})
         string(REPLACE -D "" optionr ${option})
         message(STATUS "${optionr} ")
         set(added ON)
@@ -665,7 +664,7 @@ endmacro()
 
 macro(return_values)
 
-    set(TRAPPER_TOOL ${TRAPPER_TOOL} PARENT_SCOPE)
+    set(TRAPPER_PACKAGE ${TRAPPER_PACKAGE} PARENT_SCOPE)
     set(TRAPPER_DOWNLOAD_DIR ${TRAPPER_DOWNLOAD_DIR} PARENT_SCOPE)
     set(TRAPPER_SOURCE_DIR ${TRAPPER_SOURCE_DIR} PARENT_SCOPE)
     set(TRAPPER_BUILD_DIR ${TRAPPER_BUILD_DIR} PARENT_SCOPE)

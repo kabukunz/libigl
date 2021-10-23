@@ -275,91 +275,47 @@ endfunction()
 ### Compile the MMG part ###
 if(LIBIGL_WITH_MMG)  
   if(NOT TARGET mmg)
-    include(PrebuildExternalProject)
 
-    # tools source directory (if needed, i.e. already downloaded)
-    set(THIRDPARTY_DIR "${CMAKE_SOURCE_DIR}/external")
-        
-    # install directory (if different from cmake default install prefix)
-    set(PREBUILT_DIR "${CMAKE_SOURCE_DIR}/prebuilt")
-    
-    # tool name (required)
-    set(TOOL_NAME mmg)
-    
-    # tool location (required) 
-    set(TOOL_LOCATION "https://github.com/MmgTools/mmg.git")
-    
-    # tool platform
-    set(TOOL_PLATFORM OFF)
-    
-    # tool version
-    set(TOOL_VERSION "5.5.2")
-    
-    # tool hash, if any
-    # set(TOOL_HASHING OFF)
-    set(TOOL_HASHING 379209a9bb9b52df5e7a6ca08ae366bf1991960f)
-    
-    # set this if tool sources need to be in a specific directory
-    set(TOOL_SOURCE_DIR ${THIRDPARTY_DIR})
-    
-    # set this if tool binaries need to be in a specific directory
-    set(TOOL_BINARY_DIR OFF)
-    
-    # set this if tool need to be installed in a specific directory (different from cmake default install prefix)
-    set(TOOL_INSTALL_DIR ${PREBUILT_DIR})
-    
-    # set this if tool is to be installed
-    set(TOOL_INSTALL_CMD ON)
-    
-    # set this if tool is already built
-    set(TOOL_ISPREBUILT OFF)
+    include(Trapper)
     
     # reset options
-    set(TOOL_OPTIONS "")
+    set(PACKAGE_OPTIONS "")
     
     # tool options
-    list(APPEND TOOL_OPTIONS -D CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
-    list(APPEND TOOL_OPTIONS -D CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON)
-    list(APPEND TOOL_OPTIONS -D BUILD=MMG2D)
-    list(APPEND TOOL_OPTIONS -D USE_SCOTCH=OFF)
-    list(APPEND TOOL_OPTIONS -D USE_ELAS=OFF)
-    list(APPEND TOOL_OPTIONS -D USE_VTK=OFF)
+    list(APPEND PACKAGE_OPTIONS -D CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
+    list(APPEND PACKAGE_OPTIONS -D CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON)
+    list(APPEND PACKAGE_OPTIONS -D BUILD=MMG2D)
+    list(APPEND PACKAGE_OPTIONS -D USE_SCOTCH=OFF)
+    list(APPEND PACKAGE_OPTIONS -D USE_ELAS=OFF)
+    list(APPEND PACKAGE_OPTIONS -D USE_VTK=OFF)
 
     # NOTE: mmg build in both static and shared library mode causes static mmg2d.lib to be overwritten
     # mmg2d_O3.exe is always built static and build fails if static library is missing. libs are ok
 
     # check static libigl build
     if(LIBIGL_USE_STATIC_LIBRARY)
-        list(APPEND TOOL_OPTIONS -D LIBMMG2D_STATIC=ON)
-        list(APPEND TOOL_OPTIONS -D LIBMMG2D_SHARED=OFF)
+        list(APPEND PACKAGE_OPTIONS -D LIBMMG2D_STATIC=ON)
+        list(APPEND PACKAGE_OPTIONS -D LIBMMG2D_SHARED=OFF)
     else()
-        list(APPEND TOOL_OPTIONS -D LIBMMG2D_STATIC=OFF)
-        list(APPEND TOOL_OPTIONS -D LIBMMG2D_SHARED=ON)
+        list(APPEND PACKAGE_OPTIONS -D LIBMMG2D_STATIC=OFF)
+        list(APPEND PACKAGE_OPTIONS -D LIBMMG2D_SHARED=ON)
     endif()  
     
-    # prebuild (this is built at once; execution stops until finished)
-    prebuild_external_project(
-        ${TOOL_NAME}
-        ${TOOL_LOCATION}
-        ${TOOL_HASHING}
-        ${TOOL_PLATFORM}
-        ${TOOL_VERSION}
-        ${TOOL_SOURCE_DIR}
-        ${TOOL_BINARY_DIR}
-        ${TOOL_INSTALL_DIR}
-        ${TOOL_INSTALL_CMD}
-        ${TOOL_ISPREBUILT}
-        ${TOOL_OPTIONS}
-        )
-    
-    # dependent build (this is build at build time)
-    set(MMG_DIR ${TOOL_INSTALL_DIR} CACHE STRING "MMG DIR" FORCE)
-    
-    list(APPEND CMAKE_MODULE_PATH "${TOOL_SOURCE_DIR}/${TOOL_NAME}${TOOL_VERSION}/cmake/tools")
-    
-    find_package(MMG2D REQUIRED)
-    
-    # old-style find package
+    trapper_add_package(
+        mmg
+        https://github.com/MmgTools/mmg.git
+        379209a9bb9b52df5e7a6ca08ae366bf1991960f
+        SOURCE_DIR "${CMAKE_SOURCE_DIR}/thirdparty"
+        PACKAGE_OPTIONS ${PACKAGE_OPTIONS}
+        )    
+
+    # mmg needs source dir for cmake scripts, default config has errors
+    list(APPEND CMAKE_MODULE_PATH "${TRAPPER_SOURCE_DIR}/cmake/tools")
+        
+    # set mmg dir from prebuilt
+    set(MMG_DIR ${TRAPPER_INSTALL_DIR} CACHE STRING "MMG DIR")
+
+    # find package
     find_package(MMG2D REQUIRED)
     
     # add dll for copying
