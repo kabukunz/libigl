@@ -334,6 +334,8 @@ if(LIBIGL_WITH_EMBREE)
 
     if(LIBIGL_USE_PREBUILT_LIBRARY)
 
+        include(Trapper)
+
         # download Embree binaries
         if(WIN32)
             SET(EMBREE_PREBUILT_VERSION "https://github.com/embree/embree/releases/download/v3.5.2/embree-3.5.2.x64.vc14.windows.zip")
