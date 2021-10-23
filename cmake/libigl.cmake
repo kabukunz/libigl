@@ -208,6 +208,7 @@ function(prebuilt_igl_module library_dir library_type include_dir)
   endif()
   
   # check library type
+  message(STATUS "library_type: ${library_type}")
   if(LIBIGL_USE_STATIC_LIBRARY)
       if(NOT library_type MATCHES "STATIC")
           message(FATAL_ERROR "You need to use prebuilt static libraries if LIBIGL_USE_STATIC_LIBRARY is on")
@@ -215,10 +216,11 @@ function(prebuilt_igl_module library_dir library_type include_dir)
   endif()
     
   # add imported library
+  message(STATUS "module_name: ${module_name}")
   add_library(${module_name} ${library_type} IMPORTED)
   set_property(TARGET ${module_name} PROPERTY
       IMPORTED_LOCATION ${library_dir})
-  target_include_directories(${module_name} ${include_dir})
+  target_include_directories(${module_name} INTERFACE ${include_dir})
 
   # link to libigl
   target_link_libraries(${module_libname} ${IGL_SCOPE} igl_common)
