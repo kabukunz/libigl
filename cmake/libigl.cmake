@@ -196,6 +196,8 @@ function(compile_igl_module module_dir)
   set_property(TARGET ${module_libname} PROPERTY EXPORT_NAME igl::${module_name})
 endfunction()
 
+################################################################################
+
 function(prebuilt_igl_module library_dir library_type include_dir)
 
   string(REPLACE "/" "_" module_name "${library_dir}")
@@ -342,9 +344,9 @@ if(LIBIGL_WITH_EMBREE)
 
         # list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
         
-        if(LIBIGL_USE_STATIC_LIBRARY)
-            message(FATAL_ERROR "Please use Embree prebuilt static libraries")
-        endif()
+        # if(LIBIGL_USE_STATIC_LIBRARY)
+        #     message(FATAL_ERROR "Please use Embree prebuilt static libraries")
+        # endif()
 
         # download Embree binaries
         if(WIN32)
