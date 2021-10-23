@@ -300,16 +300,17 @@ if(LIBIGL_WITH_MMG)
         list(APPEND PACKAGE_OPTIONS -D LIBMMG2D_STATIC=OFF)
         list(APPEND PACKAGE_OPTIONS -D LIBMMG2D_SHARED=ON)
     endif()  
-    
+
     trapper_add_package(
         mmg
         https://github.com/MmgTools/mmg.git
         379209a9bb9b52df5e7a6ca08ae366bf1991960f
-        SOURCE_DIR "${CMAKE_SOURCE_DIR}/thirdparty"
+        SOURCE_DIR "${LIBIGL_EXTERNAL}/mmg"
+        INSTALL_DIR "${LIBIGL_EXTERNAL}/prebuilt/mmg"
         PACKAGE_OPTIONS ${PACKAGE_OPTIONS}
         )    
 
-    # mmg needs source dir for cmake scripts, default config has errors
+    # mmg needs source dir for cmake scripts, default config scripts has errors
     list(APPEND CMAKE_MODULE_PATH "${TRAPPER_SOURCE_DIR}/cmake/tools")
         
     # set mmg dir from prebuilt
