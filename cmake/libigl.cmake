@@ -328,7 +328,6 @@ endif()
 ################################################################################
 ### Compile the embree part ###
 if(LIBIGL_WITH_EMBREE)
-  set(EMBREE_DIR "${LIBIGL_EXTERNAL}/embree")
 
   if(NOT TARGET embree)
 
@@ -344,13 +343,16 @@ if(LIBIGL_WITH_EMBREE)
         elseif(UNIX)
             SET(EMBREE_PREBUILT_VERSION "https://github.com/embree/embree/releases/download/v3.5.2/embree-3.5.2.x86_64.linux.tar.gz")
         else()
-            message(FATAL "Embree prebuilt platform not found")
+            message(FATAL "Embree prebuilt binaries not found")
         endif()
 
         # get prebuilt version
-        trapper_add_package(embree ${EMBREE_PREBUILT_VERSION} "" 
-            INSTALL_DIR ${EMBREE_DIR}
-            INSTALL_PREBUILT)
+        message("LIBIGL_EXTERNAL: ${LIBIGL_EXTERNAL}")
+        trapper_add_package(embree 
+            ${EMBREE_PREBUILT_VERSION} "" 
+            INSTALL_DIR "${LIBIGL_EXTERNAL}/prebuilt"
+            INSTALL_PREBUILT
+        )
 
         # set vars for find_package
         set(embree_DIR ${TRAPPER_INSTALL_DIR})
@@ -371,8 +373,8 @@ if(LIBIGL_WITH_EMBREE)
         set(EMBREE_STATIC_RUNTIME ${IGL_STATIC_RUNTIME} CACHE BOOL "Use the static version of the C/C++ runtime library.")
       endif()
   
-      igl_download_embree()
       set(EMBREE_DIR "${LIBIGL_EXTERNAL}/embree")  
+      igl_download_embree()
       add_subdirectory("${EMBREE_DIR}" "embree" EXCLUDE_FROM_ALL)
       compile_igl_module("embree")
 
@@ -380,7 +382,9 @@ if(LIBIGL_WITH_EMBREE)
       target_link_libraries(igl_embree ${IGL_SCOPE} embree)
       target_include_directories(igl_embree ${IGL_SCOPE} ${EMBREE_DIR}/include)
     endif()
-    
+  
+  endif()    
+
 endif()
 
 ################################################################################
