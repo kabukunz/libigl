@@ -13,7 +13,7 @@
 # 
 # Install directory with external libraries without rebuilding
 # them from source every time, in case you have to regenerate
-# your project for dev testing over and over again while using
+# your project for dev testing over and over again while using 
 # the same libraries.  
 # 
 # Those supposedly should be in your /usr/local,
@@ -680,7 +680,7 @@ endmacro()
 
 # FIXME:
 
-# dlib md5 non funziona. provare una altra libreria in download
+# dlib md5 non funziona. provare una altra libreria in download 
 # è il comando che è sbagliato, l'hash md5 è giusto
 # non funziona nemmeno l'hash di un pacchetto prebuilt (embree p.es.)
 
