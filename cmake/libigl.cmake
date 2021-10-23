@@ -20,6 +20,7 @@ endif()
 
 ### Available options ###
 option(LIBIGL_USE_STATIC_LIBRARY     "Use libigl as static library" OFF)
+option(LIBIGL_USE_PREBUILT_LIBRARY   "Use libigl with prebuilt libraries" OFF)
 option(LIBIGL_WITH_CGAL              "Use CGAL"                     OFF)
 option(LIBIGL_WITH_COMISO            "Use CoMiso"                   OFF)
 option(LIBIGL_WITH_CORK              "Use Cork"                     OFF)
@@ -195,6 +196,37 @@ function(compile_igl_module module_dir)
   set_property(TARGET ${module_libname} PROPERTY EXPORT_NAME igl::${module_name})
 endfunction()
 
+function(prebuilt_igl_module module_name library_type library_dir include_dir)
+
+  if(module_name STREQUAL "core")
+    set(module_libname "igl")
+  else()
+    set(module_libname "igl_${module_name}")
+  endif()
+
+  add_library(${module_libname} INTERFACE)
+
+  target_link_libraries(${module_libname} ${IGL_SCOPE} igl_common)
+  if(NOT module_name STREQUAL "core")
+    target_link_libraries(${module_libname} ${IGL_SCOPE} igl)
+  endif()
+
+  # prebuilt lib
+  target_link_libraries(${module_libname} ${IGL_SCOPE} ${library_dir})
+
+  # include dirs   
+  target_include_directories(${module_libname} ${IGL_SCOPE} ${include_dir})
+
+  # Alias target because it looks nicer  
+  message(STATUS "Creating prebuilt target: igl::${module_name} (${module_libname})")
+
+  add_library(igl::${module_name} ALIAS ${module_libname})
+  
+  # Export as igl::${module_name}
+  set_property(TARGET ${module_libname} PROPERTY EXPORT_NAME igl::${module_name})
+
+endfunction()
+
 ################################################################################
 ### IGL Core
 ################################################################################
@@ -299,25 +331,54 @@ if(LIBIGL_WITH_EMBREE)
   set(EMBREE_DIR "${LIBIGL_EXTERNAL}/embree")
 
   if(NOT TARGET embree)
-    igl_download_embree()
 
-    set(EMBREE_TESTING_INTENSITY 0 CACHE STRING "")
-    set(EMBREE_ISPC_SUPPORT OFF CACHE BOOL " ")
-    set(EMBREE_TASKING_SYSTEM "INTERNAL" CACHE BOOL " ")
-    set(EMBREE_TUTORIALS OFF CACHE BOOL " ")
-    set(EMBREE_MAX_ISA "SSE2" CACHE STRING " ")
-    set(EMBREE_STATIC_LIB ON CACHE BOOL " ")
-    if(MSVC)
-      set(EMBREE_STATIC_RUNTIME ${IGL_STATIC_RUNTIME} CACHE BOOL "Use the static version of the C/C++ runtime library.")
+    if(LIBIGL_USE_PREBUILT_LIBRARY)
+
+        # download Embree binaries
+        if(WIN32)
+            SET(EMBREE_PREBUILT_VERSION "https://github.com/embree/embree/releases/download/v3.5.2/embree-3.5.2.x64.vc14.windows.zip")
+        elseif(APPLE)
+            SET(EMBREE_PREBUILT_VERSION "https://github.com/embree/embree/releases/download/v3.5.2/embree-3.5.2.x86_64.macosx.tar.gz")
+        elseif(UNIX)
+            SET(EMBREE_PREBUILT_VERSION "https://github.com/embree/embree/releases/download/v3.5.2/embree-3.5.2.x86_64.linux.tar.gz")
+        else()
+            message(FATAL "Embree prebuilt platform not found")
+        endif()
+
+        # get prebuilt version
+        trapper_add_package(embree ${EMBREE_PREBUILT_VERSION} "" 
+            INSTALL_DIR ${EMBREE_DIR}
+            INSTALL_PREBUILT)
+
+        # set vars for find_package
+        set(embree_DIR ${TRAPPER_INSTALL_DIR})
+
+        # find Embree
+        find_package(embree 3.5.2 CONFIG REQUIRED)
+
+        prebuilt_igl_module(embree STATIC ${EMBREE_LIBRARY} ${EMBREE_INCLUDE_DIRS})
+    else()
+
+      set(EMBREE_TESTING_INTENSITY 0 CACHE STRING "")
+      set(EMBREE_ISPC_SUPPORT OFF CACHE BOOL " ")
+      set(EMBREE_TASKING_SYSTEM "INTERNAL" CACHE BOOL " ")
+      set(EMBREE_TUTORIALS OFF CACHE BOOL " ")
+      set(EMBREE_MAX_ISA "SSE2" CACHE STRING " ")
+      set(EMBREE_STATIC_LIB ON CACHE BOOL " ")
+      if(MSVC)
+        set(EMBREE_STATIC_RUNTIME ${IGL_STATIC_RUNTIME} CACHE BOOL "Use the static version of the C/C++ runtime library.")
+      endif()
+  
+      igl_download_embree()
+      set(EMBREE_DIR "${LIBIGL_EXTERNAL}/embree")  
+      add_subdirectory("${EMBREE_DIR}" "embree" EXCLUDE_FROM_ALL)
+      compile_igl_module("embree")
+
+      target_compile_definitions(igl_embree ${IGL_SCOPE} -DEMBREE_STATIC_LIB)
+      target_link_libraries(igl_embree ${IGL_SCOPE} embree)
+      target_include_directories(igl_embree ${IGL_SCOPE} ${EMBREE_DIR}/include)
     endif()
-
-    add_subdirectory("${EMBREE_DIR}" "embree" EXCLUDE_FROM_ALL)
-  endif()
-
-  compile_igl_module("embree")
-  target_link_libraries(igl_embree ${IGL_SCOPE} embree)
-  target_include_directories(igl_embree ${IGL_SCOPE} ${EMBREE_DIR}/include)
-  target_compile_definitions(igl_embree ${IGL_SCOPE} -DEMBREE_STATIC_LIB)
+    
 endif()
 
 ################################################################################
