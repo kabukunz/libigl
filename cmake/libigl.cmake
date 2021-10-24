@@ -198,7 +198,38 @@ endfunction()
 
 ################################################################################
 
-function(prebuilt_igl_module library_dir library_type include_dir)
+function(prebuilt_igl_module module_name library_type library_dir include_dir)
+
+  if(module_name STREQUAL "core")
+    set(module_libname "igl")
+  else()
+    set(module_libname "igl_${module_name}")
+  endif()
+
+  add_library(${module_libname} INTERFACE)
+
+  target_link_libraries(${module_libname} ${IGL_SCOPE} igl_common)
+  if(NOT module_name STREQUAL "core")
+    target_link_libraries(${module_libname} ${IGL_SCOPE} igl)
+  endif()
+
+  # prebuilt lib
+  target_link_libraries(${module_libname} ${IGL_SCOPE} ${library_dir})
+
+  # include dirs   
+  target_include_directories(${module_libname} ${IGL_SCOPE} ${include_dir})
+
+  # Alias target because it looks nicer  
+  message(STATUS "Creating prebuilt target: igl::${module_name} (${module_libname})")
+
+  add_library(igl::${module_name} ALIAS ${module_libname})
+  
+  # Export as igl::${module_name}
+  set_property(TARGET ${module_libname} PROPERTY EXPORT_NAME igl::${module_name})
+
+endfunction()
+
+function(prebuilt_igl_module2 library_dir library_type include_dir)
 
   string(REPLACE "/" "_" module_name "${library_dir}")
   if(module_name STREQUAL "core")
@@ -217,10 +248,10 @@ function(prebuilt_igl_module library_dir library_type include_dir)
     
   # add imported library
   message(STATUS "module_name: ${module_name}")
-  add_library(${module_name} ${library_type} IMPORTED)
-  set_property(TARGET ${module_name} PROPERTY
+  add_library(${module_libname} ${library_type} IMPORTED)
+  set_property(TARGET ${module_libname} PROPERTY
       IMPORTED_LOCATION ${library_dir})
-  target_include_directories(${module_name} INTERFACE ${include_dir})
+  target_include_directories(${module_libname} INTERFACE ${include_dir})
 
   # link to libigl
   target_link_libraries(${module_libname} ${IGL_SCOPE} igl_common)
@@ -232,7 +263,7 @@ function(prebuilt_igl_module library_dir library_type include_dir)
   message(STATUS "Creating prebuilt target: igl::${module_name} (${module_libname})")
 
   add_library(igl::${module_name} ALIAS ${module_libname})
-  
+
   # Export as igl::${module_name}
   set_property(TARGET ${module_libname} PROPERTY EXPORT_NAME igl::${module_name})
 
@@ -380,7 +411,16 @@ if(LIBIGL_WITH_EMBREE)
         message("EMBREE_LIBRARY: ${EMBREE_LIBRARY}")
         message("EMBREE_INCLUDE_DIRS: ${EMBREE_INCLUDE_DIRS}")
 
-        prebuilt_igl_module(${EMBREE_LIBRARY} SHARED ${EMBREE_INCLUDE_DIRS})
+        # prebuilt_igl_module(SHARED ${EMBREE_LIBRARY} ${EMBREE_INCLUDE_DIRS})
+        # # add_custom_target(embree SOURCES ${EMBREE_LIBRARY})
+
+        prebuilt_igl_module(embree STATIC ${EMBREE_LIBRARY} ${EMBREE_INCLUDE_DIRS})
+
+        # add_library(igl::embree ALIAS embree)
+          
+        # # Export as igl::${module_name}
+        # set_property(TARGET embree_lib PROPERTY EXPORT_NAME igl::embree)
+        
     else()
 
       set(EMBREE_TESTING_INTENSITY 0 CACHE STRING "")
