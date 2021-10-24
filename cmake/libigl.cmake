@@ -438,7 +438,7 @@ if(LIBIGL_WITH_EMBREE)
         # get prebuilt version
         trapper_add_package(embree 
             ${EMBREE_PREBUILT_VERSION} ""
-            INSTALL_DIR "${LIBIGL_EXTERNAL}/prebuilt/embree"
+            INSTALL_DIR "${LIBIGL_EXTERNAL}/prebuilt"
             INSTALL_PREBUILT
         )
 
