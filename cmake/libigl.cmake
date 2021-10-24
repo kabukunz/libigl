@@ -429,6 +429,23 @@ if(LIBIGL_WITH_EMBREE)
           
         # # Export as igl::${module_name}
         # set_property(TARGET embree_lib PROPERTY EXPORT_NAME igl::embree)
+
+        # set(embree_DIR ${TRAPPER_INSTALL_DIR})
+  
+        # find_package(embree 3.5.2 CONFIG REQUIRED)
+         
+        # # find package returns library_dir and include_dir
+      
+        # add_library(mylib_imp SHARED IMPORTED)
+        # set_property(TARGET mylib_imp PROPERTY
+        #     IMPORTED_LOCATION ${library_dir})
+        # target_include_directories(mylib_imp INTERFACE ${include_dir})
+      
+        # add_library(igl::${embree} ALIAS mylib_imp)
+      
+        # set_property(TARGET mylib_imp PROPERTY EXPORT_NAME igl::${embree})
+
+
         
     else()
 
