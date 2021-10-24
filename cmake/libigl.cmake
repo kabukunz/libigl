@@ -200,8 +200,13 @@ endfunction()
 
 function(prebuilt_igl_module module_name library_type library_dir include_dir)
 
-  # NOTE: need to set igl module name directly
+  # NOTE: need to set igl module name directly to the name
+  # expected. Otherwise you need import/export mechanism
+  # and that won't work with find_package as there are
+  # no sources by a cmake point of view.
+  #   
   # string(REPLACE "/" "_" module_name "${library_dir}")
+
   if(module_name STREQUAL "core")
     set(module_libname "igl")
   else()
@@ -234,46 +239,6 @@ function(prebuilt_igl_module module_name library_type library_dir include_dir)
 
   add_library(igl::${module_name} ALIAS ${module_libname})
   
-  # Export as igl::${module_name}
-  set_property(TARGET ${module_libname} PROPERTY EXPORT_NAME igl::${module_name})
-
-endfunction()
-
-function(prebuilt_igl_module2 module_name library_type library_dir include_dir)
-
-  string(REPLACE "/" "_" module_name "${library_dir}")
-  if(module_name STREQUAL "core")
-      set(module_libname "igl")
-  else()
-      set(module_libname "igl_${module_name}")
-  endif()
-  
-  # check library type
-  message(STATUS "library_type: ${library_type}")
-  if(LIBIGL_USE_STATIC_LIBRARY)
-      if(NOT library_type MATCHES "STATIC")
-          message(FATAL_ERROR "You need to use prebuilt static libraries if LIBIGL_USE_STATIC_LIBRARY is on")
-      endif()
-  endif()
-    
-  # add imported library
-  message(STATUS "module_name: ${module_name}")
-  add_library(${module_libname} ${library_type} IMPORTED)
-  set_property(TARGET ${module_libname} PROPERTY
-      IMPORTED_LOCATION ${library_dir})
-  target_include_directories(${module_libname} INTERFACE ${include_dir})
-
-  # link to libigl
-  target_link_libraries(${module_libname} ${IGL_SCOPE} igl_common)
-  if(NOT module_name STREQUAL "core")
-    target_link_libraries(${module_libname} ${IGL_SCOPE} igl)
-  endif()
-
-  # Alias target because it looks nicer  
-  message(STATUS "Creating prebuilt target: igl::${module_name} (${module_libname})")
-
-  add_library(igl::${module_name} ALIAS ${module_libname})
-
   # Export as igl::${module_name}
   set_property(TARGET ${module_libname} PROPERTY EXPORT_NAME igl::${module_name})
 
@@ -385,12 +350,6 @@ if(LIBIGL_WITH_EMBREE)
 
     if(LIBIGL_USE_PREBUILT_LIBRARY)
 
-        # list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
-        
-        # if(LIBIGL_USE_STATIC_LIBRARY)
-        #     message(FATAL_ERROR "Please use Embree prebuilt static libraries")
-        # endif()
-
         # download Embree binaries
         if(WIN32)
             SET(EMBREE_PREBUILT_VERSION "https://github.com/embree/embree/releases/download/v3.5.2/embree-3.5.2.x64.vc14.windows.zip")
@@ -421,31 +380,7 @@ if(LIBIGL_WITH_EMBREE)
         message("EMBREE_LIBRARY: ${EMBREE_LIBRARY}")
         message("EMBREE_INCLUDE_DIRS: ${EMBREE_INCLUDE_DIRS}")
 
-        # prebuilt_igl_module2(embree SHARED ${EMBREE_LIBRARY} ${EMBREE_INCLUDE_DIRS})
-
         prebuilt_igl_module(embree SHARED ${EMBREE_LIBRARY} ${EMBREE_INCLUDE_DIRS})
-
-        # add_library(igl::embree ALIAS embree)
-          
-        # # Export as igl::${module_name}
-        # set_property(TARGET embree_lib PROPERTY EXPORT_NAME igl::embree)
-
-        # set(embree_DIR ${TRAPPER_INSTALL_DIR})
-  
-        # find_package(embree 3.5.2 CONFIG REQUIRED)
-         
-        # # find package returns library_dir and include_dir
-      
-        # add_library(mylib_imp SHARED IMPORTED)
-        # set_property(TARGET mylib_imp PROPERTY
-        #     IMPORTED_LOCATION ${library_dir})
-        # target_include_directories(mylib_imp INTERFACE ${include_dir})
-      
-        # add_library(igl::${embree} ALIAS mylib_imp)
-      
-        # set_property(TARGET mylib_imp PROPERTY EXPORT_NAME igl::${embree})
-
-
         
     else()
 

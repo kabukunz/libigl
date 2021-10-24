@@ -116,11 +116,13 @@ function(trapper_add_package PACKAGE LOCATION HASHING)
     # TODO: default are directories filled with defaults
     # and everything to OFF (NAME THIS)
     # 
-    if(NOT TRAPPER_ADVANCED)
+    if(NOT TRAPPER_ADVANCED)        
         set(TRAPPER_SKIP_INSTALL_TAGS ON)
         set(TRAPPER_SKIP_UNPARSED_ARGS ON)
         set(TRAPPER_SKIP_OVERWRITE ON)
-        set(TRAPPER_INSTALL_DIR "${CMAKE_SOURCE_DIR}/prebuilt")
+        # if(NOT TRAPPER_INSTALL_DIR)
+        #     set(TRAPPER_INSTALL_DIR "${CMAKE_SOURCE_DIR}/prebuilt")
+        # endif()
     endif()
                 
     # set minimal args
