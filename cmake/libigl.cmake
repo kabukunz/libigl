@@ -275,8 +275,6 @@ endfunction()
 ### Compile the MMG part ###
 if(LIBIGL_WITH_MMG)  
   if(NOT TARGET mmg)
-
-    include(Trapper)
     
     # reset options
     set(PACKAGE_OPTIONS "")
@@ -305,8 +303,8 @@ if(LIBIGL_WITH_MMG)
         mmg
         https://github.com/MmgTools/mmg.git
         379209a9bb9b52df5e7a6ca08ae366bf1991960f
-        SOURCE_DIR "${LIBIGL_EXTERNAL}/mmg"
-        INSTALL_DIR "${LIBIGL_EXTERNAL}/prebuilt/mmg"
+        SOURCE_DIR "${LIBIGL_EXTERNAL}"
+        INSTALL_DIR "${LIBIGL_EXTERNAL}/prebuilt"
         PACKAGE_OPTIONS ${PACKAGE_OPTIONS}
         )    
 
