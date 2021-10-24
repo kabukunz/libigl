@@ -42,6 +42,12 @@ if(LIBIGL_BUILD_PYTHON)
   message(FATAL_ERROR "Python bindings have been removed in this version. Please use an older version of libigl, or wait for the new bindings to be released.")
 endif()
 
+if(LIBIGL_WITH_MMG AND LIBIGL_WITH_TRIANGLE)
+  message(WARNING "Cannot build both MMG and Triangle for CDT. Defaulting to Triangle")
+  set(LIBIGL_WITH_MMG OFF CACHE BOOL "" FORCE)
+endif()
+
+
 ################################################################################
 
 ### Configuration
@@ -314,6 +320,74 @@ function(igl_copy_cgal_dll target)
 endfunction()
 
 ################################################################################
+### Compile the MMG part ###
+if(LIBIGL_WITH_MMG)  
+  if(NOT TARGET mmg)
+    
+    # reset options
+    set(PACKAGE_OPTIONS "")
+    
+    # tool options
+    list(APPEND PACKAGE_OPTIONS -D CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
+    list(APPEND PACKAGE_OPTIONS -D CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON)
+    list(APPEND PACKAGE_OPTIONS -D BUILD=MMG2D)
+    list(APPEND PACKAGE_OPTIONS -D USE_SCOTCH=OFF)
+    list(APPEND PACKAGE_OPTIONS -D USE_ELAS=OFF)
+    list(APPEND PACKAGE_OPTIONS -D USE_VTK=OFF)
+
+    # NOTE: mmg build in both static and shared library mode causes static mmg2d.lib to be overwritten
+    # mmg2d_O3.exe is always built static and build fails if static library is missing. libs are ok
+
+    # check static libigl build
+    if(LIBIGL_USE_STATIC_LIBRARY)
+        list(APPEND PACKAGE_OPTIONS -D LIBMMG2D_STATIC=ON)
+        list(APPEND PACKAGE_OPTIONS -D LIBMMG2D_SHARED=OFF)
+    else()
+        list(APPEND PACKAGE_OPTIONS -D LIBMMG2D_STATIC=OFF)
+        list(APPEND PACKAGE_OPTIONS -D LIBMMG2D_SHARED=ON)
+    endif()  
+
+    trapper_add_package(
+        mmg
+        https://github.com/MmgTools/mmg.git
+        379209a9bb9b52df5e7a6ca08ae366bf1991960f
+        SOURCE_DIR "${LIBIGL_EXTERNAL}"
+        INSTALL_DIR "${LIBIGL_EXTERNAL}/prebuilt"
+        PACKAGE_OPTIONS ${PACKAGE_OPTIONS}
+        )    
+
+    # mmg needs source dir for cmake scripts, default config scripts has errors
+    list(APPEND CMAKE_MODULE_PATH "${TRAPPER_SOURCE_DIR}/cmake/tools")
+        
+    # set mmg dir from prebuilt
+    set(MMG_DIR ${TRAPPER_INSTALL_DIR} CACHE STRING "MMG DIR")
+
+    # find package
+    find_package(MMG2D REQUIRED)
+    
+    # add dll for copying
+    if(NOT LIBIGL_USE_STATIC_LIBRARY)
+        add_library(MMG2D_DLL SHARED IMPORTED)
+        set_property(TARGET MMG2D_DLL PROPERTY IMPORTED_LOCATION "${MMG_DIR}/lib/mmg2d.dll")
+    endif()
+            
+  endif()
+  compile_igl_module("mmg")
+  target_link_libraries(igl_mmg ${IGL_SCOPE} ${MMG2D_LIBRARIES})
+  target_include_directories(igl_mmg ${IGL_SCOPE} ${MMG2D_INCLUDE_DIRS})
+  target_compile_definitions(igl_mmg ${IGL_SCOPE} -DLIBIGL_WITH_MMG)
+endif()
+
+function(igl_copy_mmg_dll target)
+  if(WIN32 AND LIBIGL_WITH_MMG)
+    if(NOT LIBIGL_USE_STATIC_LIBRARY)
+        add_custom_command(TARGET ${target} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:MMG2D_DLL> $<TARGET_FILE_DIR:${target}>)
+    endif()
+  endif()
+endfunction()
+
+################################################################################
 ### Compile the CoMISo part ###
 # NOTE: this cmakefile works only with the
 # comiso available here: https://github.com/libigl/CoMISo
@@ -523,6 +597,7 @@ if(LIBIGL_WITH_TRIANGLE)
   compile_igl_module("triangle")
   target_link_libraries(igl_triangle ${IGL_SCOPE} triangle)
   target_include_directories(igl_triangle ${IGL_SCOPE} ${TRIANGLE_DIR})
+  target_compile_definitions(igl_triangle ${IGL_SCOPE} -DLIBIGL_WITH_TRIANGLE)
 endif()
 
 ################################################################################

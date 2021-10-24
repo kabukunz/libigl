@@ -6,6 +6,14 @@
 // v. 2.0. If a copy of the MPL was not distributed with this file, You can
 // obtain one at http://mozilla.org/MPL/2.0/.
 
+#ifdef LIBIGL_WITH_MMG
+#include <igl/mmg/triangulate.h>
+#endif
+
+#ifdef LIBIGL_WITH_TRIANGLE
+#include <igl/triangle/triangulate.h>
+#endif  
+
 #include "scaf.h"
 
 #include <Eigen/Dense>
@@ -28,7 +36,7 @@
 #include <igl/slice.h>
 #include <igl/slice_into.h>
 #include <igl/slim.h>
-#include <igl/triangle/triangulate.h>
+
 #include "mapping_energy_with_jacobians.h"
 
 #include <iostream>
@@ -215,7 +223,15 @@ void mesh_improve(igl::SCAFData &s)
   H /= 3.;
 
   MatrixXd uv2;
+  
+#ifdef LIBIGL_WITH_MMG
+  igl::mmg::triangulate(V, E, H, uv2, s.s_T);
+#endif
+
+#ifdef LIBIGL_WITH_TRIANGLE
   igl::triangle::triangulate(V, E, H, std::basic_string<char>("qYYQ"), uv2, s.s_T);
+#endif  
+
   auto bnd_n = s.internal_bnd.size();
 
   for (auto i = 0; i < s.s_T.rows(); i++)
