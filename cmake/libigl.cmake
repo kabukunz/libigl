@@ -200,10 +200,20 @@ endfunction()
 
 function(prebuilt_igl_module module_name library_type library_dir include_dir)
 
+  # NOTE: need to set igl module name directly
+  # string(REPLACE "/" "_" module_name "${library_dir}")
   if(module_name STREQUAL "core")
     set(module_libname "igl")
   else()
     set(module_libname "igl_${module_name}")
+  endif()
+
+  # check library type
+  message(STATUS "library_type: ${library_type}")
+  if(LIBIGL_USE_STATIC_LIBRARY)
+      if(NOT library_type MATCHES "STATIC")
+          message(FATAL_ERROR "You need to use prebuilt static libraries if LIBIGL_USE_STATIC_LIBRARY is enabled")
+      endif()
   endif()
 
   add_library(${module_libname} INTERFACE)
@@ -229,7 +239,7 @@ function(prebuilt_igl_module module_name library_type library_dir include_dir)
 
 endfunction()
 
-function(prebuilt_igl_module2 library_dir library_type include_dir)
+function(prebuilt_igl_module2 module_name library_type library_dir include_dir)
 
   string(REPLACE "/" "_" module_name "${library_dir}")
   if(module_name STREQUAL "core")
@@ -411,10 +421,9 @@ if(LIBIGL_WITH_EMBREE)
         message("EMBREE_LIBRARY: ${EMBREE_LIBRARY}")
         message("EMBREE_INCLUDE_DIRS: ${EMBREE_INCLUDE_DIRS}")
 
-        # prebuilt_igl_module(SHARED ${EMBREE_LIBRARY} ${EMBREE_INCLUDE_DIRS})
-        # # add_custom_target(embree SOURCES ${EMBREE_LIBRARY})
+        # prebuilt_igl_module2(embree SHARED ${EMBREE_LIBRARY} ${EMBREE_INCLUDE_DIRS})
 
-        prebuilt_igl_module(embree STATIC ${EMBREE_LIBRARY} ${EMBREE_INCLUDE_DIRS})
+        prebuilt_igl_module(embree SHARED ${EMBREE_LIBRARY} ${EMBREE_INCLUDE_DIRS})
 
         # add_library(igl::embree ALIAS embree)
           
