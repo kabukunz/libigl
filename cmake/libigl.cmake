@@ -20,7 +20,6 @@ endif()
 
 ### Available options ###
 option(LIBIGL_USE_STATIC_LIBRARY     "Use libigl as static library" OFF)
-option(LIBIGL_USE_PREBUILT_LIBRARY   "Use libigl with prebuilt libraries" OFF)
 option(LIBIGL_WITH_CGAL              "Use CGAL"                     OFF)
 option(LIBIGL_WITH_COMISO            "Use CoMiso"                   OFF)
 option(LIBIGL_WITH_CORK              "Use Cork"                     OFF)
@@ -40,6 +39,10 @@ option(LIBIGL_EXPORT_TARGETS         "Export libigl CMake targets"  OFF)
 
 if(LIBIGL_BUILD_PYTHON)
   message(FATAL_ERROR "Python bindings have been removed in this version. Please use an older version of libigl, or wait for the new bindings to be released.")
+endif()
+
+if(LIBIGL_WITH_EMBREE)
+    option(LIBIGL_EMBREE_PREBUILT_LIBRARIES "Use Embree prebuilt libraries" OFF)
 endif()
 
 ################################################################################
@@ -348,7 +351,7 @@ if(LIBIGL_WITH_EMBREE)
 
   if(NOT TARGET embree)
 
-    if(LIBIGL_USE_PREBUILT_LIBRARY)
+    if(LIBIGL_EMBREE_PREBUILT_LIBRARIES)
 
         # download Embree binaries
         if(WIN32)
@@ -364,7 +367,6 @@ if(LIBIGL_WITH_EMBREE)
         include(Trapper)
 
         # get prebuilt version
-        message("LIBIGL_EXTERNAL: ${LIBIGL_EXTERNAL}")
         trapper_add_package(embree 
             ${EMBREE_PREBUILT_VERSION} ""
             INSTALL_DIR "${LIBIGL_EXTERNAL}/prebuilt/embree"
@@ -376,9 +378,6 @@ if(LIBIGL_WITH_EMBREE)
 
         # find Embree
         find_package(embree 3.5.2 CONFIG REQUIRED)
-
-        message("EMBREE_LIBRARY: ${EMBREE_LIBRARY}")
-        message("EMBREE_INCLUDE_DIRS: ${EMBREE_INCLUDE_DIRS}")
 
         prebuilt_igl_module(embree SHARED ${EMBREE_LIBRARY} ${EMBREE_INCLUDE_DIRS})
         
