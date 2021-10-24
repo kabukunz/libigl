@@ -364,8 +364,6 @@ if(LIBIGL_WITH_EMBREE)
             message(FATAL "Embree prebuilt binaries not found")
         endif()
 
-        include(Trapper)
-
         # get prebuilt version
         trapper_add_package(embree 
             ${EMBREE_PREBUILT_VERSION} ""

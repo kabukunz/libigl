@@ -8,6 +8,7 @@ HunterGate(
 	URL "https://github.com/ruslo/hunter/archive/v0.23.171.tar.gz"
 	SHA1 "5d68bcca78eee347239ca5f4d34f4b6c12683154"
 )
+include("cmake/Trapper.cmake")
 
 project(libigl)
 
