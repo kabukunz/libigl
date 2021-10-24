@@ -304,7 +304,6 @@ if(LIBIGL_WITH_MMG)
         https://github.com/MmgTools/mmg.git
         379209a9bb9b52df5e7a6ca08ae366bf1991960f
         SOURCE_DIR "${LIBIGL_EXTERNAL}"
-        INSTALL_DIR "${LIBIGL_EXTERNAL}/prebuilt"
         PACKAGE_OPTIONS ${PACKAGE_OPTIONS}
         )    
 
