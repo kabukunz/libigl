@@ -378,12 +378,13 @@ if(LIBIGL_WITH_EMBREE)
 
         prebuilt_igl_module(embree SHARED ${EMBREE_LIBRARY} ${EMBREE_INCLUDE_DIRS})
 
-        # add dll for copying
-        # -- EMBREE_LIBRARY:C:/Users/kabukunz/Developer/Library/at3digl/libigl/prebuilt/lib/embree3.lib
-        add_library(EMBREE_DLL SHARED IMPORTED)
-        add_library(EMBREE_TBB_DLL SHARED IMPORTED)
-        set_property(TARGET EMBREE_DLL PROPERTY IMPORTED_LOCATION "${embree_DIR}/bin/embree3.dll")
-        set_property(TARGET EMBREE_TBB_DLL PROPERTY IMPORTED_LOCATION "${embree_DIR}/bin/tbb.dll")
+        # add libraries for copying dll
+        if(WIN32)
+            add_library(EMBREE_DLL SHARED IMPORTED)
+            add_library(EMBREE_TBB_DLL SHARED IMPORTED)
+            set_property(TARGET EMBREE_DLL PROPERTY IMPORTED_LOCATION "${embree_DIR}/bin/embree3.dll")
+            set_property(TARGET EMBREE_TBB_DLL PROPERTY IMPORTED_LOCATION "${embree_DIR}/bin/tbb.dll")
+        endif()
 
     else()
 
