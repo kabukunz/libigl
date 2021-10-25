@@ -1,4 +1,6 @@
-rmdir /S /Q .\build
+
+del /S /Q build\CMakeCache.txt
+del /S /Q build\ExternalProjects\mmg\build\CMakeCache.txt
 
 cmake -B build -G "Ninja" ^
 -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=TRUE ^
