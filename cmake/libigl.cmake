@@ -420,17 +420,6 @@ endif()
 ################################################################################
 ### Compile the embree part ###
 if(LIBIGL_WITH_EMBREE)
-    set(EMBREE_DIR "${LIBIGL_EXTERNAL}/embree")
-
-    set(EMBREE_TESTING_INTENSITY 0 CACHE STRING "")
-    set(EMBREE_ISPC_SUPPORT OFF CACHE BOOL " ")
-    set(EMBREE_TASKING_SYSTEM "INTERNAL" CACHE BOOL " ")
-    set(EMBREE_TUTORIALS OFF CACHE BOOL " ")
-    set(EMBREE_MAX_ISA "SSE2" CACHE STRING " ")
-    set(EMBREE_STATIC_LIB ON CACHE BOOL " ")
-    if(MSVC)
-        set(EMBREE_STATIC_RUNTIME ${IGL_STATIC_RUNTIME} CACHE BOOL "Use the static version of the C/C++ runtime library.")
-    endif()
 
   if(NOT TARGET embree)
 
@@ -471,9 +460,8 @@ if(LIBIGL_WITH_EMBREE)
             set_property(TARGET EMBREE_TBB_DLL PROPERTY IMPORTED_LOCATION "${embree_DIR}/bin/tbb.dll")
         endif()
 
-    if(EMBREE_PREBUILT_LIBRARIES)
-        prebuilt_igl_module(embree STATIC ${EMBREE_LIBRARY} ${EMBREE_INCLUDE_DIRS})
     else()
+    
       set(EMBREE_DIR "${LIBIGL_EXTERNAL}/embree")
       igl_download_embree()
       add_subdirectory("${EMBREE_DIR}" "embree" EXCLUDE_FROM_ALL)
@@ -482,7 +470,9 @@ if(LIBIGL_WITH_EMBREE)
       target_link_libraries(igl_embree ${IGL_SCOPE} embree)
       target_include_directories(igl_embree ${IGL_SCOPE} ${EMBREE_DIR}/include)
       target_compile_definitions(igl_embree ${IGL_SCOPE} -DEMBREE_STATIC_LIB)
+
     endif()
+  endif()
 endif()
 
 function(igl_copy_embree_dlls target)
