@@ -420,71 +420,33 @@ endif()
 ################################################################################
 ### Compile the embree part ###
 if(LIBIGL_WITH_EMBREE)
+    set(EMBREE_DIR "${LIBIGL_EXTERNAL}/embree")
 
-  if(NOT TARGET embree)
-
-    if(LIBIGL_USE_PREBUILT_LIBRARIES)
-
-        # NOTE: those are only SHARED libs
-
-        # download Embree binaries
-        if(WIN32)
-            SET(EMBREE_PREBUILT_VERSION "https://github.com/embree/embree/releases/download/v3.5.2/embree-3.5.2.x64.vc14.windows.zip")
-        elseif(APPLE)
-            SET(EMBREE_PREBUILT_VERSION "https://github.com/embree/embree/releases/download/v3.5.2/embree-3.5.2.x86_64.macosx.tar.gz")
-        elseif(UNIX)
-            SET(EMBREE_PREBUILT_VERSION "https://github.com/embree/embree/releases/download/v3.5.2/embree-3.5.2.x86_64.linux.tar.gz")
-        else()
-            message(FATAL "Embree prebuilt binaries not found")
-        endif()
-
-        # get prebuilt version
-        trapper_add_package(embree 
-            ${EMBREE_PREBUILT_VERSION} ""
-            INSTALL_PREBUILT
-            VERBOSE
-        )
-
-        # set vars for find_package
-        set(embree_DIR ${TRAPPER_INSTALL_DIR})
-
-        # find Embree
-        find_package(embree 3.5.2 CONFIG REQUIRED)
-
-        prebuilt_igl_module(embree SHARED ${EMBREE_LIBRARY} ${EMBREE_INCLUDE_DIRS})
-
-        # add libraries for copying dll
-        if(WIN32)
-            add_library(EMBREE_DLL SHARED IMPORTED)
-            add_library(EMBREE_TBB_DLL SHARED IMPORTED)
-            set_property(TARGET EMBREE_DLL PROPERTY IMPORTED_LOCATION "${embree_DIR}/bin/embree3.dll")
-            set_property(TARGET EMBREE_TBB_DLL PROPERTY IMPORTED_LOCATION "${embree_DIR}/bin/tbb.dll")
-        endif()
-
-    else()
-
-      set(EMBREE_TESTING_INTENSITY 0 CACHE STRING "")
-      set(EMBREE_ISPC_SUPPORT OFF CACHE BOOL " ")
-      set(EMBREE_TASKING_SYSTEM "INTERNAL" CACHE BOOL " ")
-      set(EMBREE_TUTORIALS OFF CACHE BOOL " ")
-      set(EMBREE_MAX_ISA "SSE2" CACHE STRING " ")
-      set(EMBREE_STATIC_LIB ON CACHE BOOL " ")
-      if(MSVC)
+    set(EMBREE_TESTING_INTENSITY 0 CACHE STRING "")
+    set(EMBREE_ISPC_SUPPORT OFF CACHE BOOL " ")
+    set(EMBREE_TASKING_SYSTEM "INTERNAL" CACHE BOOL " ")
+    set(EMBREE_TUTORIALS OFF CACHE BOOL " ")
+    set(EMBREE_MAX_ISA "SSE2" CACHE STRING " ")
+    set(EMBREE_STATIC_LIB ON CACHE BOOL " ")
+    if(MSVC)
         set(EMBREE_STATIC_RUNTIME ${IGL_STATIC_RUNTIME} CACHE BOOL "Use the static version of the C/C++ runtime library.")
-      endif()
-  
-      set(EMBREE_DIR "${LIBIGL_EXTERNAL}/embree")  
+    endif()
+
+    # NOTE: Embree prebuilt
+    # find_package(embree 3.5.2 REQUIRED) has to be done before this in your top-level CMakeList.txt
+
+    if(EMBREE_PREBUILT_LIBRARIES)
+        prebuilt_igl_module(embree STATIC ${EMBREE_LIBRARY} ${EMBREE_INCLUDE_DIRS})
+    else()
+      set(EMBREE_DIR "${LIBIGL_EXTERNAL}/embree")
       igl_download_embree()
       add_subdirectory("${EMBREE_DIR}" "embree" EXCLUDE_FROM_ALL)
+    
       compile_igl_module("embree")
-
-      target_compile_definitions(igl_embree ${IGL_SCOPE} -DEMBREE_STATIC_LIB)
       target_link_libraries(igl_embree ${IGL_SCOPE} embree)
       target_include_directories(igl_embree ${IGL_SCOPE} ${EMBREE_DIR}/include)
+      target_compile_definitions(igl_embree ${IGL_SCOPE} -DEMBREE_STATIC_LIB)
     endif()
-  
-  endif()    
-
 endif()
 
 function(igl_copy_embree_dlls target)
