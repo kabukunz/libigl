@@ -350,6 +350,8 @@ if(LIBIGL_WITH_EMBREE)
 
     if(LIBIGL_USE_PREBUILT_LIBRARIES)
 
+        # NOTE: those are only SHARED libs
+
         # download Embree binaries
         if(WIN32)
             SET(EMBREE_PREBUILT_VERSION "https://github.com/embree/embree/releases/download/v3.5.2/embree-3.5.2.x64.vc14.windows.zip")
@@ -374,6 +376,11 @@ if(LIBIGL_WITH_EMBREE)
         find_package(embree 3.5.2 CONFIG REQUIRED)
 
         prebuilt_igl_module(embree SHARED ${EMBREE_LIBRARY} ${EMBREE_INCLUDE_DIRS})
+
+        # add dll for copying
+        message(STATUS "EMBREE_LIBRARY:" ${EMBREE_LIBRARY})
+        add_library(EMBREE_DLL SHARED IMPORTED)
+        set_property(TARGET EMBREE_DLL PROPERTY IMPORTED_LOCATION ${EMBREE_LIBRARY})
         
     else()
 
@@ -400,6 +407,14 @@ if(LIBIGL_WITH_EMBREE)
   endif()    
 
 endif()
+
+function(igl_copy_embree_dll target)
+    if(LIBIGL_USE_PREBUILT_LIBRARIES)
+        add_custom_command(TARGET ${target} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:EMBREE_DLL> $<TARGET_FILE_DIR:${target}>)
+    endif()
+endfunction()
+
 
 ################################################################################
 ### Compile the matlab part ###

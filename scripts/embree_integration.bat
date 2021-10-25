@@ -1,7 +1,8 @@
 
-del /Q build\CMakeCache.txt
+del /Q /S build\CMakeCache.txt
+del /Q /S build\ExternalProjects\embree\build\CMakeCache.txt
 
-cmake -S . -B build ^
+cmake -S . -B build -G Ninja ^
 -DCMAKE_BUILD_TYPE=Release ^
 -DLIBIGL_BUILD_TESTS=OFF ^
 -DLIBIGL_USE_STATIC_LIBRARY=OFF ^
