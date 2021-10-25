@@ -352,7 +352,7 @@ if(LIBIGL_WITH_MMG)
     trapper_add_package(
         mmg
         https://github.com/kabukunz/mmg.git
-        f7f511991790eda53c518324b61bca5677f57769
+        0bd72572f1def664ce659ceed02d0ce013662e4e
         SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external"
         PACKAGE_OPTIONS ${PACKAGE_OPTIONS}
         VERBOSE
