@@ -322,7 +322,7 @@ if(LIBIGL_WITH_MMG)
     # add dll for copying
     if(NOT LIBIGL_USE_STATIC_LIBRARY)
         add_library(MMG2D_DLL SHARED IMPORTED)
-        set_property(TARGET MMG2D_DLL PROPERTY IMPORTED_LOCATION "${MMG_DIR}/lib/mmg2d.dll")
+        set_property(TARGET MMG2D_DLL PROPERTY IMPORTED_LOCATION "${MMG_DIR}/bin/mmg2d.dll")
     endif()
             
   endif()
