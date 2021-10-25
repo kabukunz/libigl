@@ -355,7 +355,6 @@ if(LIBIGL_WITH_MMG)
         0bd72572f1def664ce659ceed02d0ce013662e4e
         SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external"
         PACKAGE_OPTIONS ${PACKAGE_OPTIONS}
-        VERBOSE
         )    
 
     # mmg needs source dir for cmake scripts, default config scripts has errors
