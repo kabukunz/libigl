@@ -1,6 +1,9 @@
-del /Q build\CMakeCache.txt
 
-cmake -S . -B build -G Ninja ^
+del /S /Q build\CMakeCache.txt
+del /S /Q build\ExternalProjects\mmg\build\CMakeCache.txt
+
+cmake -B build -G "Ninja" ^
+-DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=TRUE ^
 -DCMAKE_BUILD_TYPE=Release ^
 -DLIBIGL_BUILD_TESTS=OFF ^
 -DLIBIGL_USE_STATIC_LIBRARY=OFF ^
@@ -17,6 +20,5 @@ cmake -S . -B build -G Ninja ^
 -DTUTORIALS_CHAPTER5=OFF ^
 -DTUTORIALS_CHAPTER6=OFF ^
 -DTUTORIALS_CHAPTER7=ON
-
 
 cmake --build build

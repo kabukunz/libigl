@@ -1,6 +1,7 @@
 #!/bin/bash
 
-rm -rf build\CMakeCache.txt
+rm -rf build/CMakeCache.txt
+rm -rf build/ExternalProjects/mmg/build/CMakeCache.txt
 
 cmake -S . -B build -G Ninja \
 -DCMAKE_BUILD_TYPE=Release \
