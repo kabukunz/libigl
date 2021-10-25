@@ -367,7 +367,6 @@ if(LIBIGL_WITH_EMBREE)
         trapper_add_package(embree 
             ${EMBREE_PREBUILT_VERSION} ""
             INSTALL_PREBUILT
-            VERBOSE
         )
 
         # set vars for find_package
