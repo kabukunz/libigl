@@ -329,11 +329,13 @@ if(LIBIGL_WITH_MMG)
     
     # tool options
     list(APPEND PACKAGE_OPTIONS -D CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
-    list(APPEND PACKAGE_OPTIONS -D CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON)
+    list(APPEND PACKAGE_OPTIONS -D CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON)    
     list(APPEND PACKAGE_OPTIONS -D BUILD=MMG2D)
     list(APPEND PACKAGE_OPTIONS -D USE_SCOTCH=OFF)
     list(APPEND PACKAGE_OPTIONS -D USE_ELAS=OFF)
     list(APPEND PACKAGE_OPTIONS -D USE_VTK=OFF)
+    list(APPEND PACKAGE_OPTIONS -D BUILD_TESTING=OFF)
+    list(APPEND PACKAGE_OPTIONS -D TEST_LIBMMG2D=OFF)
 
     # NOTE: mmg build in both static and shared library mode causes static mmg2d.lib to be overwritten
     # mmg2d_O3.exe is always built static and build fails if static library is missing. libs are ok
@@ -349,8 +351,8 @@ if(LIBIGL_WITH_MMG)
 
     trapper_add_package(
         mmg
-        https://github.com/MmgTools/mmg.git
-        379209a9bb9b52df5e7a6ca08ae366bf1991960f
+        https://github.com/kabukunz/mmg.git
+        0bd72572f1def664ce659ceed02d0ce013662e4e
         SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external"
         PACKAGE_OPTIONS ${PACKAGE_OPTIONS}
         )    
@@ -367,7 +369,7 @@ if(LIBIGL_WITH_MMG)
     # add dll for copying
     if(NOT LIBIGL_USE_STATIC_LIBRARY)
         add_library(MMG2D_DLL SHARED IMPORTED)
-        set_property(TARGET MMG2D_DLL PROPERTY IMPORTED_LOCATION "${MMG_DIR}/lib/mmg2d.dll")
+        set_property(TARGET MMG2D_DLL PROPERTY IMPORTED_LOCATION "${MMG_DIR}/bin/mmg2d.dll")
     endif()
             
   endif()
