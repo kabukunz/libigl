@@ -55,7 +55,7 @@ function(trapper_add_package PACKAGE LOCATION HASHING)
 
     option(TRAPPER_SKIP_INSTALL_TAGS "Skip formatting install directory with tags" OFF)
 
-    option(TRAPPER_ADVANCED "Skip enforcing Trapper defaults" OFF)
+    option(TRAPPER_SKIP_DEFAULTS "Skip enforcing Trapper defaults" OFF)
                 
 
     # 
@@ -65,7 +65,7 @@ function(trapper_add_package PACKAGE LOCATION HASHING)
     set(prefix "TRAPPER")
         
     set(flags    
-        ADVANCED                # skip enforcing Trapper defaults
+        SKIP_DEFAULTS                # skip enforcing Trapper defaults
     
         INSTALL_PREBUILT        # download and install an already built tool
     
@@ -116,7 +116,7 @@ function(trapper_add_package PACKAGE LOCATION HASHING)
     # TODO: default are directories filled with defaults
     # and everything to OFF (NAME THIS)
     # 
-    if(NOT TRAPPER_ADVANCED)        
+    if(NOT TRAPPER_SKIP_DEFAULTS)        
         set(TRAPPER_SKIP_INSTALL_TAGS ON)
         set(TRAPPER_SKIP_UNPARSED_ARGS ON)
         set(TRAPPER_SKIP_OVERWRITE ON)
@@ -167,20 +167,21 @@ function(trapper_add_package PACKAGE LOCATION HASHING)
         endif()   
     endif()
 
+    # CHECK: here for the thirdparty error
     # set directories
-    if(NOT TRAPPER_DOWNLOAD_DIR AND TRAPPER_ADVANCED)
+    if(NOT TRAPPER_DOWNLOAD_DIR AND TRAPPER_SKIP_DEFAULTS)
         set(TRAPPER_DOWNLOAD_DIR "${CMAKE_SOURCE_DIR}/.cache")
     endif()
 
-    if(NOT TRAPPER_SOURCE_DIR AND TRAPPER_ADVANCED)
+    if(NOT TRAPPER_SOURCE_DIR AND TRAPPER_SKIP_DEFAULTS)
         set(TRAPPER_SOURCE_DIR "${CMAKE_SOURCE_DIR}/thirdparty")
     endif()
 
-    if(NOT TRAPPER_BUILD_DIR AND TRAPPER_ADVANCED)
+    if(NOT TRAPPER_BUILD_DIR AND TRAPPER_SKIP_DEFAULTS)
         set(TRAPPER_BUILD_DIR "${CMAKE_BINARY_DIR}")
     endif()
 
-    if(NOT TRAPPER_INSTALL_DIR AND TRAPPER_ADVANCED)
+    if(NOT TRAPPER_INSTALL_DIR AND TRAPPER_SKIP_DEFAULTS)
         set(TRAPPER_INSTALL_DIR "${CMAKE_SOURCE_DIR}/prebuilt")
     endif()
     
@@ -301,7 +302,7 @@ function(trapper_add_package PACKAGE LOCATION HASHING)
         set(TRAPPER_BUILD_COMMAND "BUILD_COMMAND \"\"")
             
         # if prebuilt, just copy files from source dir
-        set(TRAPPER_INSTALL_COMMAND "INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR> ${TRAPPER_INSTALL_DIR}")
+        set(TRAPPER_INSTALL_COMMAND "INSTALL_COMMAND \"${CMAKE_COMMAND}\" -E copy_directory <SOURCE_DIR> \"${TRAPPER_INSTALL_DIR}\"")
 
     endif()
 
@@ -546,7 +547,7 @@ macro(verbose)
     message(STATUS "TRAPPER_SKIP_BUILD              : ${TRAPPER_SKIP_BUILD}             ")
     message(STATUS "TRAPPER_SKIP_INSTALL            : ${TRAPPER_SKIP_INSTALL}           ")
     
-    message(STATUS "TRAPPER_ADVANCED                : ${TRAPPER_ADVANCED}               ")
+    message(STATUS "TRAPPER_SKIP_DEFAULTS           : ${TRAPPER_SKIP_DEFAULTS}          ")
     message(STATUS "TRAPPER_INSTALL_PREBUILT        : ${TRAPPER_INSTALL_PREBUILT}       ")
     message(STATUS "TRAPPER_SKIP_INSTALL_TAGS       : ${TRAPPER_SKIP_INSTALL_TAGS}      ")
 
@@ -684,8 +685,43 @@ endmacro()
 # dlib md5 non funziona. provare una altra libreria in download 
 # è il comando che è sbagliato, l'hash md5 è giusto
 # non funziona nemmeno l'hash di un pacchetto prebuilt (embree p.es.)
+# TUTTI i path vanno escapati con \" ... \" per le dir con gli spazi (windows)
+
+# -----
 
 # INSTALL_PREBUILT potrebbe essere eliminato da un controllo cmake sulla presenza del CMakeLists.txt
+
+# -----
+
+# viene creata una directory thirdparty/mmg anche se gli do una SOURCE_DIR differente
+
+# Quando si clona libigl la directory thirdparty/mmg a root gli da fastidio:
+
+# remote: Compressing objects: 100% (205/205), done.        
+# remote: Total 38947 (delta 266), reused 313 (delta 185), pack-reused 38547        
+# Receiving objects: 100% (38947/38947), 10.22 MiB | 6.06 MiB/s, done.
+# Resolving deltas: 100% (24123/24123), done.
+# HEAD is now at fe34fa73 Merge branch 'mmg_integration' into integration
+# fatal: No url found for submodule path 'thirdparty/mmg' in .gitmodules
+# CMake Error at .cache/libigl/libigl-download-prefix/tmp/libigl-download-gitclone.cmake:52 (message):
+#   Failed to update submodules in:
+#   '/Users/max/Developer/Stage/Workspace/AutoTools3D/dep/libigl'
+
+
+# ninja: build stopped: subcommand failed.
+# CMake Error at cmake/DownloadProject.cmake:179 (message):
+#   Build step for libigl failed: 1
+# Call Stack (most recent call first):
+#   cmake/AutoTools3DDownloadExternal.cmake:14 (download_project)
+#   cmake/AutoTools3DDownloadExternal.cmake:26 (kt_download_project_aux)
+#   cmake/AutoTools3DDownloadExternal.cmake:59 (kt_download_project)
+#   CMakeLists.txt:437 (kt_download_libigl)
+
+
+# -- Configuring incomplete, errors occurred!
+
+# Come se si aspettasse un submodule che non c'è
+
 
 # TODO:
 
