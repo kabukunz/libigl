@@ -367,6 +367,7 @@ if(LIBIGL_WITH_EMBREE)
         trapper_add_package(embree 
             ${EMBREE_PREBUILT_VERSION} ""
             INSTALL_PREBUILT
+            VERBOSE
         )
 
         # set vars for find_package
@@ -378,10 +379,12 @@ if(LIBIGL_WITH_EMBREE)
         prebuilt_igl_module(embree SHARED ${EMBREE_LIBRARY} ${EMBREE_INCLUDE_DIRS})
 
         # add dll for copying
-        message(STATUS "EMBREE_LIBRARY:" ${EMBREE_LIBRARY})
+        # -- EMBREE_LIBRARY:C:/Users/kabukunz/Developer/Library/at3digl/libigl/prebuilt/lib/embree3.lib
         add_library(EMBREE_DLL SHARED IMPORTED)
-        set_property(TARGET EMBREE_DLL PROPERTY IMPORTED_LOCATION ${EMBREE_LIBRARY})
-        
+        add_library(EMBREE_TBB_DLL SHARED IMPORTED)
+        set_property(TARGET EMBREE_DLL PROPERTY IMPORTED_LOCATION "${embree_DIR}/bin/embree3.dll")
+        set_property(TARGET EMBREE_TBB_DLL PROPERTY IMPORTED_LOCATION "${embree_DIR}/bin/tbb.dll")
+
     else()
 
       set(EMBREE_TESTING_INTENSITY 0 CACHE STRING "")
@@ -408,10 +411,12 @@ if(LIBIGL_WITH_EMBREE)
 
 endif()
 
-function(igl_copy_embree_dll target)
+function(igl_copy_embree_dlls target)
     if(LIBIGL_USE_PREBUILT_LIBRARIES)
         add_custom_command(TARGET ${target} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:EMBREE_DLL> $<TARGET_FILE_DIR:${target}>)
+            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:EMBREE_DLL> $<TARGET_FILE_DIR:${target}>
+            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:EMBREE_TBB_DLL> $<TARGET_FILE_DIR:${target}>
+            )
     endif()
 endfunction()
 
