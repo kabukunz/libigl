@@ -423,6 +423,8 @@ if(LIBIGL_WITH_EMBREE)
 
     if(LIBIGL_USE_PREBUILT_LIBRARIES)
 
+        # NOTE: those are only SHARED libs
+
         # download Embree binaries
         if(WIN32)
             SET(EMBREE_PREBUILT_VERSION "https://github.com/embree/embree/releases/download/v3.5.2/embree-3.5.2.x64.vc14.windows.zip")
@@ -438,6 +440,7 @@ if(LIBIGL_WITH_EMBREE)
         trapper_add_package(embree 
             ${EMBREE_PREBUILT_VERSION} ""
             INSTALL_PREBUILT
+            VERBOSE
         )
 
         # set vars for find_package
@@ -447,7 +450,15 @@ if(LIBIGL_WITH_EMBREE)
         find_package(embree 3.5.2 CONFIG REQUIRED)
 
         prebuilt_igl_module(embree SHARED ${EMBREE_LIBRARY} ${EMBREE_INCLUDE_DIRS})
-        
+
+        # add libraries for copying dll
+        if(WIN32)
+            add_library(EMBREE_DLL SHARED IMPORTED)
+            add_library(EMBREE_TBB_DLL SHARED IMPORTED)
+            set_property(TARGET EMBREE_DLL PROPERTY IMPORTED_LOCATION "${embree_DIR}/bin/embree3.dll")
+            set_property(TARGET EMBREE_TBB_DLL PROPERTY IMPORTED_LOCATION "${embree_DIR}/bin/tbb.dll")
+        endif()
+
     else()
 
       set(EMBREE_TESTING_INTENSITY 0 CACHE STRING "")
@@ -473,6 +484,16 @@ if(LIBIGL_WITH_EMBREE)
   endif()    
 
 endif()
+
+function(igl_copy_embree_dlls target)
+    if(LIBIGL_USE_PREBUILT_LIBRARIES)
+        add_custom_command(TARGET ${target} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:EMBREE_DLL> $<TARGET_FILE_DIR:${target}>
+            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:EMBREE_TBB_DLL> $<TARGET_FILE_DIR:${target}>
+            )
+    endif()
+endfunction()
+
 
 ################################################################################
 ### Compile the matlab part ###
