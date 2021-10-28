@@ -168,11 +168,11 @@ function(igl_download_predicates)
 	)
 endfunction()
 
-## mmg
-function(igl_download_mmg)
-    igl_download_project(mmg
-		GIT_REPOSITORY https://github.com/MmgTools/mmg.git
-		GIT_TAG        379209a9bb9b52df5e7a6ca08ae366bf1991960f
+# trapper
+function(igl_download_trapper)
+    igl_download_project(trapper
+		GIT_REPOSITORY https://github.com/kabukunz/trapper.git
+		GIT_TAG        0c7902ed685c310d246d373e6873e5de34906636
 		)
 endfunction()
 

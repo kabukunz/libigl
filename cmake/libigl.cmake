@@ -66,6 +66,9 @@ endif()
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 include(LibiglDownloadExternal)
 
+igl_download_trapper()
+include("${LIBIGL_EXTERNAL}/trapper/Trapper.cmake")
+
 # Provides igl_set_folders() to set folders for Visual Studio/Xcode
 include(LibiglFolders)
 
@@ -353,8 +356,9 @@ if(LIBIGL_WITH_MMG)
         mmg
         https://github.com/kabukunz/mmg.git
         0bd72572f1def664ce659ceed02d0ce013662e4e
-        SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external"
+        SOURCE_DIR "${CMAKE_SOURCE_DIR}/external"
         PACKAGE_OPTIONS ${PACKAGE_OPTIONS}
+        VERBOSE
         )    
 
     # mmg needs source dir for cmake scripts, default config scripts has errors
@@ -442,6 +446,7 @@ if(LIBIGL_WITH_EMBREE)
         trapper_add_package(embree 
             ${EMBREE_PREBUILT_VERSION} ""
             INSTALL_PREBUILT
+            VERBOSE
         )
 
         # set vars for find_package
