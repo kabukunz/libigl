@@ -172,7 +172,7 @@ endfunction()
 function(igl_download_trapper)
     igl_download_project(trapper
 		GIT_REPOSITORY https://github.com/kabukunz/trapper.git
-		GIT_TAG        0c7902ed685c310d246d373e6873e5de34906636
+		GIT_TAG        3ee0aedb66390f9abd82543b9227c05e1b7edbba
 		)
 endfunction()
 
