@@ -339,13 +339,24 @@ void compute_jacobians(SCAFData &s, const Eigen::MatrixXd &V_new, bool whole)
 }
 
 double compute_energy_from_jacobians(const Eigen::MatrixXd &Ji,
-                                        const Eigen::VectorXd &areas,
-                                        igl::MappingEnergyType energy_type)
+                                     const Eigen::VectorXd &areas,
+                                     igl::MappingEnergyType energy_type)
 {
-    double energy = 0;
-    if (energy_type == igl::MappingEnergyType::SYMMETRIC_DIRICHLET)
-        energy = -4; // comply with paper description
-    return energy + igl::mapping_energy_with_jacobians(Ji, areas, energy_type, 0);
+
+  double energy = 0;
+
+// NOTE: patching infinite loop in triangle.c
+// fast_expansion_sum_zeroelim()
+// happening for some models
+#ifdef LIBIGL_WITH_TRIANGLE
+#endif
+
+#ifdef LIBIGL_WITH_MMG
+  if (energy_type == igl::MappingEnergyType::SYMMETRIC_DIRICHLET)
+    energy = -4; // comply with paper description  
+#endif
+
+  return energy + igl::mapping_energy_with_jacobians(Ji, areas, energy_type, 0);
 }
 
 double compute_soft_constraint_energy(const SCAFData &s)
