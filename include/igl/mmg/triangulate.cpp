@@ -11,22 +11,21 @@
 #include "mmg/mmg2d/libmmg2d.h"
 
 template <
- typename DerivedV,
- typename DerivedE,
- typename DerivedH, 
- typename DerivedV2,
- typename DerivedF2>
-IGL_INLINE bool igl::mmg::triangulate(
-  const Eigen::MatrixBase<DerivedV> & V,
-  const Eigen::MatrixBase<DerivedE> & E,
-  const Eigen::MatrixBase<DerivedH> & H,
-  Eigen::PlainObjectBase<DerivedV2> & V2,
-  Eigen::PlainObjectBase<DerivedF2> & F2,
-  MMGOptions &mmgOptions
-  )
+    typename DerivedV,
+    typename DerivedE,
+    typename DerivedH,
+    typename DerivedV2,
+    typename DerivedF2>
+IGL_INLINE bool igl::mmg::mmg2d::triangulate(
+    const Eigen::MatrixBase<DerivedV> &V,
+    const Eigen::MatrixBase<DerivedE> &E,
+    const Eigen::MatrixBase<DerivedH> &H,
+    Eigen::PlainObjectBase<DerivedV2> &V2,
+    Eigen::PlainObjectBase<DerivedF2> &F2,
+    MMGOptions &mmgOptions)
 {
 
-    // V, E are required for Scaf
+    // V, E are required
     assert(V.rows() > 0 && "Vertices matrix is empty");
     assert(E.rows() > 0 && "Edges matrix is empty");
 
@@ -53,25 +52,47 @@ IGL_INLINE bool igl::mmg::triangulate(
     if (!ier)
         return false;
 
-    // mmg2d_verbose level (-1 is silent)
-    ier = MMG2D_Set_iparameter(mesh, met, MMG2D_IPARAM_verbose, mmgOptions.mmg2d_verbose);
-    if (!ier)
-        return false;
+    // check MMG options
 
-    // force hard angles on border (do not modify scaffold squared edges)
-    ier = MMG2D_Set_dparameter(mesh, met, MMG2D_DPARAM_angleDetection, mmgOptions.mmg2d_angleDetection);
-    if (!ier)
-        return false;
+    // angle detection on borders
+    if (mmgOptions.mmg2d_angleDetection)
+    {
+        ier = MMG2D_Set_dparameter(mesh, met, MMG2D_DPARAM_angleDetection, mmgOptions.mmg2d_angleDetection);
+        if (!ier)
+            return false;
+    }
 
-    // do not insert steiner points (do not modify original scaffold vertices)
-    ier = MMG2D_Set_iparameter(mesh, met, MMG2D_IPARAM_noinsert, mmgOptions.mmg2d_noInsert);
-    if (!ier)
-        return false;
+    // do not insert steiner points
+    if (mmgOptions.mmg2d_noInsert)
+    {
+        ier = MMG2D_Set_iparameter(mesh, met, MMG2D_IPARAM_noinsert, mmgOptions.mmg2d_noInsert);
+        if (!ier)
+            return false;
+    }
 
-    // remeshing quality (as Delaunay as possible scaffold triangular distribution)
-    ier = MMG2D_Set_dparameter(mesh, met, MMG2D_DPARAM_hgrad, mmgOptions.mmg2d_hgrad);
-    if (!ier)
-        return false;
+    // remeshing quality
+    if (mmgOptions.mmg2d_hgrad)
+    {
+        ier = MMG2D_Set_dparameter(mesh, met, MMG2D_DPARAM_hgrad, mmgOptions.mmg2d_hgrad);
+        if (!ier)
+            return false;
+    }
+
+    // edge size
+    if (mmgOptions.mmg2d_hsiz)
+    {
+        ier = MMG2D_Set_dparameter(mesh, met, MMG2D_DPARAM_hsiz, mmgOptions.mmg2d_hsiz);
+        if (!ier)
+            return false;
+    }
+
+    // mmg2d_verbose level
+    if (mmgOptions.mmg2d_verbose)
+    {
+        ier = MMG2D_Set_iparameter(mesh, met, MMG2D_IPARAM_verbose, mmgOptions.mmg2d_verbose);
+        if (!ier)
+            return false;
+    }
 
     // get verts and tris number
     np = V.rows();
@@ -176,20 +197,20 @@ IGL_INLINE bool igl::mmg::triangulate(
         return false;
 
     return true;
-
 }
 
 #ifdef IGL_STATIC_LIBRARY
 // Explicit template instantiation
-template bool igl::mmg::triangulate<
-    Eigen::Matrix<double, -1, -1, 1, -1, -1>, 
-    Eigen::Matrix<int, -1, -1, 0, -1, -1>, 
-    Eigen::Matrix<double, -1, -1, 1, -1, -1>, 
-    Eigen::Matrix<double, -1, -1, 1, -1, -1>, 
-    Eigen::Matrix<int, -1, -1, 0, -1, -1> >(
-    Eigen::MatrixBase<Eigen::Matrix<double, -1, -1, 1, -1, -1> > const&, 
-    Eigen::MatrixBase<Eigen::Matrix<int, -1, -1, 0, -1, -1> > const&, 
-    Eigen::MatrixBase<Eigen::Matrix<double, -1, -1, 1, -1, -1> > const&, 
-    Eigen::PlainObjectBase<Eigen::Matrix<double, -1, -1, 1, -1, -1> >&, 
-    Eigen::PlainObjectBase<Eigen::Matrix<int, -1, -1, 0, -1, -1> >&);
+template bool igl::mmg::mmg2d::triangulate<
+    Eigen::Matrix<double, -1, -1, 1, -1, -1>,
+    Eigen::Matrix<int, -1, -1, 0, -1, -1>,
+    Eigen::Matrix<double, -1, -1, 1, -1, -1>,
+    Eigen::Matrix<double, -1, -1, 1, -1, -1>,
+    Eigen::Matrix<int, -1, -1, 0, -1, -1>>(
+    Eigen::MatrixBase<Eigen::Matrix<double, -1, -1, 1, -1, -1>> const &,
+    Eigen::MatrixBase<Eigen::Matrix<int, -1, -1, 0, -1, -1>> const &,
+    Eigen::MatrixBase<Eigen::Matrix<double, -1, -1, 1, -1, -1>> const &,
+    Eigen::PlainObjectBase<Eigen::Matrix<double, -1, -1, 1, -1, -1>> &,
+    Eigen::PlainObjectBase<Eigen::Matrix<int, -1, -1, 0, -1, -1>> &,
+    MMGOptions &);
 #endif
