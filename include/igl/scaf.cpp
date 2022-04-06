@@ -228,7 +228,16 @@ bool mesh_improve(igl::SCAFData &s)
         return false;
 
 #ifdef LIBIGL_WITH_MMG
-    igl::mmg::triangulate(V, E, H, uv2, s.s_T);
+    MMGOptions mmgOptions = {};
+    
+    // MMG equivalent of Triangle string options
+    mmgOptions.mmg2d_angleDetection = 0.0;
+    mmgOptions.mmg2d_noInsert = 1;
+    mmgOptions.mmg2d_hgrad = 30.0;
+
+    mmgOptions.mmg2d_verbose = -1;
+
+    igl::mmg::triangulate(V, E, H, uv2, s.s_T, mmgOptions);
 #endif
 
 #ifdef LIBIGL_WITH_TRIANGLE

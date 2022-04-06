@@ -53,28 +53,23 @@ IGL_INLINE bool igl::mmg::triangulate(
     if (!ier)
         return false;
 
-    int mmg2d_verbose = -1;
-    double mmg2d_angleDetection = 0.0;
-    int mmg2d_noInsert = 1;
-    double mmg2d_hgrad = 30.0;
-
     // mmg2d_verbose level (-1 is silent)
-    ier = MMG2D_Set_iparameter(mesh, met, MMG2D_IPARAM_verbose, mmg2d_verbose);
+    ier = MMG2D_Set_iparameter(mesh, met, MMG2D_IPARAM_verbose, mmgOptions.mmg2d_verbose);
     if (!ier)
         return false;
 
     // force hard angles on border (do not modify scaffold squared edges)
-    ier = MMG2D_Set_dparameter(mesh, met, MMG2D_DPARAM_angleDetection, mmg2d_angleDetection);
+    ier = MMG2D_Set_dparameter(mesh, met, MMG2D_DPARAM_angleDetection, mmgOptions.mmg2d_angleDetection);
     if (!ier)
         return false;
 
     // do not insert steiner points (do not modify original scaffold vertices)
-    ier = MMG2D_Set_iparameter(mesh, met, MMG2D_IPARAM_noinsert, mmg2d_noInsert);
+    ier = MMG2D_Set_iparameter(mesh, met, MMG2D_IPARAM_noinsert, mmgOptions.mmg2d_noInsert);
     if (!ier)
         return false;
 
     // remeshing quality (as Delaunay as possible scaffold triangular distribution)
-    ier = MMG2D_Set_dparameter(mesh, met, MMG2D_DPARAM_hgrad, mmg2d_hgrad);
+    ier = MMG2D_Set_dparameter(mesh, met, MMG2D_DPARAM_hgrad, mmgOptions.mmg2d_hgrad);
     if (!ier)
         return false;
 
