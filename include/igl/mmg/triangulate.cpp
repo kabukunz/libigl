@@ -57,7 +57,7 @@ IGL_INLINE bool igl::mmg::mmg2d::triangulate(
     // angle detection on borders
     if (mmgOptions.mmg2d_angleDetection)
     {
-        ier = MMG2D_Set_dparameter(mesh, met, MMG2D_DPARAM_angleDetection, mmgOptions.mmg2d_angleDetection);
+        ier = MMG2D_Set_dparameter(mesh, met, MMG2D_DPARAM_angleDetection, mmgOptions.mmg2d_angleDetection.value());
         if (!ier)
             return false;
     }
@@ -65,7 +65,7 @@ IGL_INLINE bool igl::mmg::mmg2d::triangulate(
     // do not insert steiner points
     if (mmgOptions.mmg2d_noInsert)
     {
-        ier = MMG2D_Set_iparameter(mesh, met, MMG2D_IPARAM_noinsert, mmgOptions.mmg2d_noInsert);
+        ier = MMG2D_Set_iparameter(mesh, met, MMG2D_IPARAM_noinsert, mmgOptions.mmg2d_noInsert.value());
         if (!ier)
             return false;
     }
@@ -73,7 +73,7 @@ IGL_INLINE bool igl::mmg::mmg2d::triangulate(
     // remeshing quality
     if (mmgOptions.mmg2d_hgrad)
     {
-        ier = MMG2D_Set_dparameter(mesh, met, MMG2D_DPARAM_hgrad, mmgOptions.mmg2d_hgrad);
+        ier = MMG2D_Set_dparameter(mesh, met, MMG2D_DPARAM_hgrad, mmgOptions.mmg2d_hgrad.value());
         if (!ier)
             return false;
     }
@@ -81,7 +81,7 @@ IGL_INLINE bool igl::mmg::mmg2d::triangulate(
     // edge size
     if (mmgOptions.mmg2d_hsiz)
     {
-        ier = MMG2D_Set_dparameter(mesh, met, MMG2D_DPARAM_hsiz, mmgOptions.mmg2d_hsiz);
+        ier = MMG2D_Set_dparameter(mesh, met, MMG2D_DPARAM_hsiz, mmgOptions.mmg2d_hsiz.value());
         if (!ier)
             return false;
     }
@@ -89,7 +89,7 @@ IGL_INLINE bool igl::mmg::mmg2d::triangulate(
     // mmg2d_verbose level
     if (mmgOptions.mmg2d_verbose)
     {
-        ier = MMG2D_Set_iparameter(mesh, met, MMG2D_IPARAM_verbose, mmgOptions.mmg2d_verbose);
+        ier = MMG2D_Set_iparameter(mesh, met, MMG2D_IPARAM_verbose, mmgOptions.mmg2d_verbose.value());
         if (!ier)
             return false;
     }
