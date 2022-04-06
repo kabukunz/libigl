@@ -228,7 +228,7 @@ bool mesh_improve(igl::SCAFData &s)
         return false;
 
 #ifdef LIBIGL_WITH_MMG
-    MMGOptions mmgOptions = {};
+    mmg::mmg2d::MMGOptions mmgOptions = {};
     
     // NOTE: MMG equivalent of Triangle string options
     
