@@ -15,6 +15,18 @@ namespace igl
 {
   namespace mmg
   {
+
+    // MMG options data structure
+    struct MMGOptions
+    {
+        int mmg2d_noInsert = {};
+        double mmg2d_angleDetection = {};
+        double mmg2d_hgrad = {};
+        double mmg2d_hsiz = {};
+
+        int mmg2d_verbose = {};
+    };
+
     // Triangulate the interior of a polygon using the mmg library.
     //
     // Inputs:
@@ -37,7 +49,8 @@ namespace igl
     const Eigen::MatrixBase<DerivedE> & E,
     const Eigen::MatrixBase<DerivedH> & H,
     Eigen::PlainObjectBase<DerivedV2> & V2,
-    Eigen::PlainObjectBase<DerivedF2> & F2);        
+    Eigen::PlainObjectBase<DerivedF2> & F2,
+    MMGOptions &mmgOptions);        
   }
 }
 
