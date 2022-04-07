@@ -73,7 +73,7 @@ namespace igl
         Eigen::MatrixXd Ri_m, Ji_m, Ri_s, Ji_s;
         Eigen::MatrixXd W_m, W_s;
 
-        SCAFError scaferror = SCAFError::NONE; 
+        SCAFError scafError = SCAFError::NONE; 
     };
 
     // Compute necessary information to start using SCAF

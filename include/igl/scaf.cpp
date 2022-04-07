@@ -226,7 +226,7 @@ bool mesh_improve(igl::SCAFData &s)
     // check for mini patches numerical errors
     if (!V.allFinite())
     {
-        s.scaferror = SCAFError::NUMERICAL;
+        s.scafError = SCAFError::NUMERICAL;
         return false;
     }
 
@@ -249,7 +249,7 @@ bool mesh_improve(igl::SCAFData &s)
 
     if(!igl::mmg::mmg2d::triangulate(V, E, H, uv2, s.s_T, mmgOptions))
     {
-        s.scaferror = SCAFError::MMGCDT;
+        s.scafError = SCAFError::MMGCDT;
         return false;
     }
 #endif
