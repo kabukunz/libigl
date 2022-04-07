@@ -20,6 +20,13 @@ namespace igl
     // Zhongshi Jiang, Scott Schaefer, Daniele Panozzo, ACM Trancaction on Graphics (Proc. SIGGRAPH Asia 2017)
     // For a complete implementation and customized UI, please refer to https://github.com/jiangzhongshi/scaffold-map
 
+    struct SCAFError
+    {
+        NONE,
+        NUMERICAL,
+        MMGCDT,
+    };
+
     struct SCAFData
     {
         double scaffold_factor = 10;
@@ -65,6 +72,8 @@ namespace igl
         Eigen::SparseMatrix<double> Dx_m, Dy_m, Dz_m;
         Eigen::MatrixXd Ri_m, Ji_m, Ri_s, Ji_s;
         Eigen::MatrixXd W_m, W_s;
+
+        SCAFError scaferror = SCAFError::NONE; 
     };
 
     // Compute necessary information to start using SCAF

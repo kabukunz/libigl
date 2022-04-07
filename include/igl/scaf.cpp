@@ -225,7 +225,10 @@ bool mesh_improve(igl::SCAFData &s)
 
     // check for mini patches numerical errors
     if (!V.allFinite())
+    {
+        s.scaferror = SCAFError::NUMERICAL;
         return false;
+    }
 
 #ifdef LIBIGL_WITH_MMG
     mmg::mmg2d::MMGOptions mmgOptions = {};
@@ -245,7 +248,10 @@ bool mesh_improve(igl::SCAFData &s)
     mmgOptions.mmg2d_verbose = -1;
 
     if(!igl::mmg::mmg2d::triangulate(V, E, H, uv2, s.s_T, mmgOptions))
+    {
+        s.scaferror = SCAFError::MMGCDT;
         return false;
+    }
 #endif
 
 #ifdef LIBIGL_WITH_TRIANGLE
