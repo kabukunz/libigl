@@ -20,7 +20,7 @@ namespace igl
     // Zhongshi Jiang, Scott Schaefer, Daniele Panozzo, ACM Trancaction on Graphics (Proc. SIGGRAPH Asia 2017)
     // For a complete implementation and customized UI, please refer to https://github.com/jiangzhongshi/scaffold-map
 
-    struct SCAFError
+    enum class SCAFError
     {
         NONE,
         NUMERICAL,
