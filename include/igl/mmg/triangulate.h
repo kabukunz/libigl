@@ -14,7 +14,7 @@
 
 namespace igl
 {
-namespace mmg
+namespace mmg 
 {
 namespace mmg2d
 {
