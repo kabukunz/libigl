@@ -24,7 +24,7 @@ namespace igl
     {
         NONE,
         NUMERICAL_PATCH,
-        TRIANGULATE_MMG,
+        TRIANGULATE_MMG, 
     };
 
     struct SCAFData
