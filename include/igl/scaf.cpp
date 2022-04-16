@@ -144,7 +144,7 @@ void compute_scaffold_gradient_matrix(SCAFData &s,
             F2.col(2).asDiagonal() * Dz;
 }
 
-bool mesh_improve(igl::SCAFData &s)
+bool mesh_improve(igl::SCAFData &s, SCAFError e = {})
 {
     using namespace Eigen;
     MatrixXd m_uv = s.w_uv.topRows(s.mv_num);
@@ -226,7 +226,7 @@ bool mesh_improve(igl::SCAFData &s)
     // check for mini patches numerical errors
     if (!V.allFinite())
     {
-        s.scafError = SCAFError::NUMERICAL_PATCH;
+        e = SCAFError::NUMERICAL_PATCH;
         return false;
     }
 
@@ -249,7 +249,7 @@ bool mesh_improve(igl::SCAFData &s)
 
     if(!igl::mmg::mmg2d::triangulate(V, E, H, uv2, s.s_T, mmgOptions))
     {
-        s.scafError = SCAFError::TRIANGULATE_MMG;
+        e = SCAFError::TRIANGULATE_MMG;
         return false;
     }
 #endif
@@ -744,7 +744,7 @@ IGL_INLINE bool igl::scaf_precompute(
     return true;
 }
 
-IGL_INLINE bool igl::scaf_solve(SCAFData &s, int iter_num)
+IGL_INLINE bool igl::scaf_solve(SCAFData &s, int iter_num, SCAFError &e)
 {
     using namespace std;
     using namespace Eigen;
@@ -754,7 +754,7 @@ IGL_INLINE bool igl::scaf_solve(SCAFData &s, int iter_num)
     {
         s.total_energy = igl::scaf::compute_energy(s, s.w_uv, true) / s.mesh_measure;
         s.rect_frame_V = Eigen::MatrixXd();
-        if(!igl::scaf::mesh_improve(s))
+        if(!igl::scaf::mesh_improve(s, e))
             return false;
 
         double new_weight = s.mesh_measure * s.energy / (s.sf_num * 100);
