@@ -144,7 +144,7 @@ void compute_scaffold_gradient_matrix(SCAFData &s,
             F2.col(2).asDiagonal() * Dz;
 }
 
-bool mesh_improve(igl::SCAFData &s, SCAFError e = {})
+bool mesh_improve(igl::SCAFData &s, SCAFError &e)
 {
     using namespace Eigen;
     MatrixXd m_uv = s.w_uv.topRows(s.mv_num);
@@ -292,7 +292,8 @@ bool mesh_improve(igl::SCAFData &s, SCAFError e = {})
 bool add_new_patch(igl::SCAFData &s, const Eigen::MatrixXd &V_ref,
                     const Eigen::MatrixXi &F_ref,
                     const Eigen::RowVectorXd &center,
-                    const Eigen::MatrixXd &uv_init)
+                    const Eigen::MatrixXd &uv_init,
+                    SCAFError &e)
 {
     using namespace std;
     using namespace Eigen;
@@ -334,7 +335,7 @@ bool add_new_patch(igl::SCAFData &s, const Eigen::MatrixXd &V_ref,
 
     s.rect_frame_V = MatrixXd();
 
-    if (!mesh_improve(s))
+    if (!mesh_improve(s, e))
         return false;
 
     return true;
@@ -683,12 +684,13 @@ IGL_INLINE bool igl::scaf_precompute(
     igl::MappingEnergyType slim_energy,
     Eigen::VectorXi &b,
     Eigen::MatrixXd &bc,
-    double soft_p)
+    double soft_p,
+    SCAFError &e)
 {
     Eigen::MatrixXd CN;
     Eigen::MatrixXi FN;
     
-    if(!igl::scaf::add_new_patch(data, V, F, Eigen::RowVector2d(0, 0), V_init))
+    if(!igl::scaf::add_new_patch(data, V, F, Eigen::RowVector2d(0, 0), V_init, e))
         return false;
 
     data.soft_const_p = soft_p;
