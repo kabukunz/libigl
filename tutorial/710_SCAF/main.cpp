@@ -19,6 +19,7 @@ Eigen::MatrixXi F;
 Eigen::MatrixXd V_uv;
 igl::Timer timer;
 igl::SCAFData scaf_data;
+igl::SCAFError e = {};
 
 bool show_uv = false;
 float uv_scale = 0.2f;
@@ -33,7 +34,7 @@ bool key_down(igl::opengl::glfw::Viewer& viewer, unsigned char key, int modifier
   if (key == ' ')
   {
     timer.start();
-    igl::scaf_solve(scaf_data, 1);
+    igl::scaf_solve(scaf_data, 1, e);
     std::cout << "time = " << timer.getElapsedTime() << std::endl;
   }
 
@@ -102,8 +103,8 @@ int main(int argc, char *argv[])
     uv_init.conservativeResize(V.rows(), 2);
   }
 
-  Eigen::VectorXi b; Eigen::MatrixXd bc;
-  igl::scaf_precompute(V, F, uv_init, scaf_data, igl::MappingEnergyType::SYMMETRIC_DIRICHLET, b, bc, 0);
+  Eigen::VectorXi b; Eigen::MatrixXd bc;  
+  igl::scaf_precompute(V, F, uv_init, scaf_data, igl::MappingEnergyType::SYMMETRIC_DIRICHLET, b, bc, 0, e);
 
   // Plot the mesh
   igl::opengl::glfw::Viewer viewer;
