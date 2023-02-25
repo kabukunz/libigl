@@ -253,6 +253,7 @@ bool mesh_improve(igl::SCAFData &s, SCAFError &e)
         return false;
     }
 #endif
+<<<<<<< HEAD
 
 #ifdef LIBIGL_WITH_TRIANGLE
     igl::triangle::triangulate(V, E, H, std::basic_string<char>("qYYQ"), uv2, s.s_T);
@@ -369,16 +370,8 @@ double compute_energy_from_jacobians(const Eigen::MatrixXd &Ji,
 
   double energy = 0;
 
-// NOTE: patching infinite loop in triangle.c
-// fast_expansion_sum_zeroelim()
-// happening for some models
-#ifdef LIBIGL_WITH_TRIANGLE
-#endif
-
-#ifdef LIBIGL_WITH_MMG
   if (energy_type == igl::MappingEnergyType::SYMMETRIC_DIRICHLET)
     energy = -4; // comply with paper description  
-#endif
 
   return energy + igl::mapping_energy_with_jacobians(Ji, areas, energy_type, 0);
 }
