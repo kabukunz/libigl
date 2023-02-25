@@ -253,7 +253,6 @@ bool mesh_improve(igl::SCAFData &s, SCAFError &e)
         return false;
     }
 #endif
-<<<<<<< HEAD
 
 #ifdef LIBIGL_WITH_TRIANGLE
     igl::triangle::triangulate(V, E, H, std::basic_string<char>("qYYQ"), uv2, s.s_T);
