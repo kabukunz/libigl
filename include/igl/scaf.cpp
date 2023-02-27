@@ -236,13 +236,16 @@ bool mesh_improve(igl::SCAFData &s, SCAFError &e)
     // NOTE: MMG equivalent of Triangle string options
     
     // force hard angles on borders (do not modify scaffold squared edges)
-    mmgOptions.mmg2d_angleDetection = 0.0;
+    mmgOptions.mmg2d_angleDetection = 0.1;
 
     // do not insert steiner points (do not modify original scaffold vertices)
     mmgOptions.mmg2d_noInsert = 1;
 
     // remeshing quality angles constraint (as Delaunay as possible)
-    mmgOptions.mmg2d_hgrad = 30.0;
+    mmgOptions.mmg2d_hgrad = 1.0;
+
+    // remeshing accuracy (on the boundaries and as a fraction of their bounding box)
+    mmgOptions.mmg2d_hausd = 0.0001;
 
     // mmg2d_verbose level (-1 is silent)
     mmgOptions.mmg2d_verbose = -1;
