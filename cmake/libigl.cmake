@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.1)
 
+# NOTE: std::optional in mmg::triangulate interface
+set(CMAKE_CXX_STANDARD 17)
+
 # https://github.com/libigl/libigl/issues/751
 # http://lists.llvm.org/pipermail/llvm-commits/Week-of-Mon-20160425/351643.html
 if(APPLE)
@@ -33,6 +36,7 @@ option(LIBIGL_WITH_OPENGL_GLFW_IMGUI "Use ImGui"                          OFF)
 option(LIBIGL_WITH_PNG               "Use PNG"                            OFF)
 option(LIBIGL_WITH_TETGEN            "Use Tetgen"                         OFF)
 option(LIBIGL_WITH_TRIANGLE          "Use Triangle"                       OFF)
+option(LIBIGL_WITH_MMG               "Use MMG"                            OFF)
 option(LIBIGL_WITH_PREDICATES        "Use exact predicates"               OFF)
 option(LIBIGL_WITH_XML               "Use XML"                            OFF)
 option(LIBIGL_WITHOUT_COPYLEFT       "Disable Copyleft libraries"         OFF)
@@ -47,6 +51,11 @@ if(LIBIGL_WITH_MMG AND LIBIGL_WITH_TRIANGLE)
   set(LIBIGL_WITH_MMG OFF CACHE BOOL "" FORCE)
 endif()
 
+if(NOT LIBIGL_WITH_MMG AND NOT LIBIGL_WITH_TRIANGLE)
+  message(WARNING "Must build either MMG or Triangle for CDT. Defaulting to Triangle")
+  set(LIBIGL_WITH_MMG OFF CACHE BOOL "" FORCE)
+  set(LIBIGL_WITH_TRIANGLE ON CACHE BOOL "" FORCE)
+endif()
 
 ################################################################################
 
@@ -65,6 +74,9 @@ endif()
 # Download and update 3rdparty libraries
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 include(LibiglDownloadExternal)
+
+igl_download_trapper()
+include("${LIBIGL_EXTERNAL}/trapper/Trapper.cmake")
 
 # Provides igl_set_folders() to set folders for Visual Studio/Xcode
 include(LibiglFolders)
@@ -355,6 +367,7 @@ if(LIBIGL_WITH_MMG)
         0bd72572f1def664ce659ceed02d0ce013662e4e
         SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external"
         PACKAGE_OPTIONS ${PACKAGE_OPTIONS}
+        VERBOSE
         )    
 
     # mmg needs source dir for cmake scripts, default config scripts has errors
@@ -420,24 +433,49 @@ endif()
 ################################################################################
 ### Compile the embree part ###
 if(LIBIGL_WITH_EMBREE)
-    set(EMBREE_DIR "${LIBIGL_EXTERNAL}/embree")
 
-    set(EMBREE_TESTING_INTENSITY 0 CACHE STRING "")
-    set(EMBREE_ISPC_SUPPORT OFF CACHE BOOL " ")
-    set(EMBREE_TASKING_SYSTEM "INTERNAL" CACHE BOOL " ")
-    set(EMBREE_TUTORIALS OFF CACHE BOOL " ")
-    set(EMBREE_MAX_ISA "SSE2" CACHE STRING " ")
-    set(EMBREE_STATIC_LIB ON CACHE BOOL " ")
-    if(MSVC)
-        set(EMBREE_STATIC_RUNTIME ${IGL_STATIC_RUNTIME} CACHE BOOL "Use the static version of the C/C++ runtime library.")
-    endif()
+  if(NOT TARGET embree)
 
-    # NOTE: Embree prebuilt
-    # find_package(embree 3.5.2 REQUIRED) has to be done before this in your top-level CMakeList.txt
+    if(LIBIGL_USE_PREBUILT_LIBRARIES)
 
-    if(EMBREE_PREBUILT_LIBRARIES)
-        prebuilt_igl_module(embree STATIC ${EMBREE_LIBRARY} ${EMBREE_INCLUDE_DIRS})
+        # NOTE: those are only SHARED libs
+
+        # download Embree binaries
+        if(WIN32)
+            SET(EMBREE_PREBUILT_VERSION "https://github.com/embree/embree/releases/download/v3.5.2/embree-3.5.2.x64.vc14.windows.zip")
+        elseif(APPLE)
+            SET(EMBREE_PREBUILT_VERSION "https://github.com/embree/embree/releases/download/v3.5.2/embree-3.5.2.x86_64.macosx.tar.gz")
+        elseif(UNIX)
+            SET(EMBREE_PREBUILT_VERSION "https://github.com/embree/embree/releases/download/v3.5.2/embree-3.5.2.x86_64.linux.tar.gz")
+        else()
+            message(FATAL "Embree prebuilt binaries not found")
+        endif()
+
+        # get prebuilt version
+        trapper_add_package(embree 
+            ${EMBREE_PREBUILT_VERSION} ""
+            INSTALL_PREBUILT
+            VERBOSE
+        )
+
+        # set vars for find_package
+        set(embree_DIR ${TRAPPER_INSTALL_DIR})
+
+        # find Embree
+        find_package(embree 3.5.2 CONFIG REQUIRED)
+
+        prebuilt_igl_module(embree SHARED ${EMBREE_LIBRARY} ${EMBREE_INCLUDE_DIRS})
+
+        # add libraries for copying dll
+        if(WIN32)
+            add_library(EMBREE_DLL SHARED IMPORTED)
+            add_library(EMBREE_TBB_DLL SHARED IMPORTED)
+            set_property(TARGET EMBREE_DLL PROPERTY IMPORTED_LOCATION "${embree_DIR}/bin/embree3.dll")
+            set_property(TARGET EMBREE_TBB_DLL PROPERTY IMPORTED_LOCATION "${embree_DIR}/bin/tbb.dll")
+        endif()
+
     else()
+    
       set(EMBREE_DIR "${LIBIGL_EXTERNAL}/embree")
       igl_download_embree()
       add_subdirectory("${EMBREE_DIR}" "embree" EXCLUDE_FROM_ALL)
@@ -446,8 +484,20 @@ if(LIBIGL_WITH_EMBREE)
       target_link_libraries(igl_embree ${IGL_SCOPE} embree)
       target_include_directories(igl_embree ${IGL_SCOPE} ${EMBREE_DIR}/include)
       target_compile_definitions(igl_embree ${IGL_SCOPE} -DEMBREE_STATIC_LIB)
+
     endif()
+  endif()
 endif()
+
+function(igl_copy_embree_dlls target)
+    if(LIBIGL_USE_PREBUILT_LIBRARIES)
+        add_custom_command(TARGET ${target} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:EMBREE_DLL> $<TARGET_FILE_DIR:${target}>
+            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:EMBREE_TBB_DLL> $<TARGET_FILE_DIR:${target}>
+            )
+    endif()
+endfunction()
+
 
 ################################################################################
 ### Compile the matlab part ###

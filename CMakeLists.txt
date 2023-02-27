@@ -8,9 +8,8 @@ HunterGate(
 	URL "https://github.com/ruslo/hunter/archive/v0.23.171.tar.gz"
 	SHA1 "5d68bcca78eee347239ca5f4d34f4b6c12683154"
 )
-include("cmake/Trapper.cmake")
 
-project(libigl)
+project(libigl) 
 
 # Detects whether this is a top-level project
 get_directory_property(LIBIGL_PARENT_DIR PARENT_DIRECTORY)
@@ -32,17 +31,17 @@ option(LIBIGL_USE_STATIC_LIBRARY "Use libigl as static library" ON)
 
 # All dependencies that are downloaded as cmake projects and tested on the auto-builds are ON
 # (by default, all build options are off)
-option(LIBIGL_WITH_COMISO            "Use CoMiso"                   ON)
-option(LIBIGL_WITH_EMBREE            "Use Embree"                   ON)
-option(LIBIGL_WITH_OPENGL            "Use OpenGL"                   ON)
-option(LIBIGL_WITH_OPENGL_GLFW       "Use GLFW"                     ON)
-option(LIBIGL_WITH_OPENGL_GLFW_IMGUI "Use ImGui"                    ON)
-option(LIBIGL_WITH_PNG               "Use PNG"                      ON)
-option(LIBIGL_WITH_TETGEN            "Use Tetgen"                   ON)
-option(LIBIGL_WITH_TRIANGLE          "Use Triangle"                 ON)
+option(LIBIGL_WITH_COMISO            "Use CoMiso"                   OFF)
+option(LIBIGL_WITH_EMBREE            "Use Embree"                   OFF)
+option(LIBIGL_WITH_OPENGL            "Use OpenGL"                   OFF)
+option(LIBIGL_WITH_OPENGL_GLFW       "Use GLFW"                     OFF)
+option(LIBIGL_WITH_OPENGL_GLFW_IMGUI "Use ImGui"                    OFF)
+option(LIBIGL_WITH_PNG               "Use PNG"                      OFF)
+option(LIBIGL_WITH_TETGEN            "Use Tetgen"                   OFF)
+option(LIBIGL_WITH_TRIANGLE          "Use Triangle"                 OFF)
 option(LIBIGL_WITH_MMG               "Use MMG"                      OFF)
-option(LIBIGL_WITH_PREDICATES        "Use exact predicates"         ON)
-option(LIBIGL_WITH_XML               "Use XML"                      ON)
+option(LIBIGL_WITH_PREDICATES        "Use exact predicates"         OFF)
+option(LIBIGL_WITH_XML               "Use XML"                      OFF)
 option(LIBIGL_WITH_PYTHON            "Use Python"                   OFF)
 ### End
 
