@@ -23,8 +23,8 @@ namespace igl
     enum class SCAFError
     {
         NONE,
-        NUMERICAL_PATCH,
-        TRIANGULATE_MMG, 
+        NUMERICAL,
+        CDT2D,
     };
 
     struct SCAFData

@@ -54,6 +54,14 @@ IGL_INLINE bool igl::mmg::mmg2d::triangulate(
 
     // check MMG options
 
+    // mmg2d_verbose level
+    if (mmgOptions.mmg2d_verbose)
+    {
+        ier = MMG2D_Set_iparameter(mesh, met, MMG2D_IPARAM_verbose, mmgOptions.mmg2d_verbose.value());
+        if (!ier)
+            return false;
+    }
+
     // angle detection on borders
     if (mmgOptions.mmg2d_angleDetection)
     {
@@ -78,18 +86,18 @@ IGL_INLINE bool igl::mmg::mmg2d::triangulate(
             return false;
     }
 
-    // edge size
-    if (mmgOptions.mmg2d_hsiz)
+    // remeshing accuracy
+    if (mmgOptions.mmg2d_hausd)
     {
-        ier = MMG2D_Set_dparameter(mesh, met, MMG2D_DPARAM_hsiz, mmgOptions.mmg2d_hsiz.value());
+        ier = MMG2D_Set_dparameter(mesh, met, MMG2D_DPARAM_hausd, mmgOptions.mmg2d_hausd.value());
         if (!ier)
             return false;
     }
 
-    // mmg2d_verbose level
-    if (mmgOptions.mmg2d_verbose)
+    // edge size
+    if (mmgOptions.mmg2d_hsiz)
     {
-        ier = MMG2D_Set_iparameter(mesh, met, MMG2D_IPARAM_verbose, mmgOptions.mmg2d_verbose.value());
+        ier = MMG2D_Set_dparameter(mesh, met, MMG2D_DPARAM_hsiz, mmgOptions.mmg2d_hsiz.value());
         if (!ier)
             return false;
     }
