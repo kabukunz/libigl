@@ -8,7 +8,9 @@
 
 #include "triangulate.h"
 
+#ifdef LIBIGL_WITH_MMG
 #include "mmg/mmg2d/libmmg2d.h"
+#endif
 
 template <
     typename DerivedV,
@@ -28,6 +30,8 @@ IGL_INLINE bool igl::mmg::mmg2d::triangulate(
     // V, E are required
     assert(V.rows() > 0 && "Vertices matrix is empty");
     assert(E.rows() > 0 && "Edges matrix is empty");
+
+#ifdef LIBIGL_WITH_MMG
 
     // vars
     MMG5_pMesh mesh = NULL;
@@ -203,6 +207,8 @@ IGL_INLINE bool igl::mmg::mmg2d::triangulate(
     ier = MMG2D_Free_all(MMG5_ARG_start, MMG5_ARG_ppMesh, &mesh, MMG5_ARG_ppMet, &met, MMG5_ARG_end);
     if (!ier)
         return false;
+
+#endif
 
     return true;
 }
