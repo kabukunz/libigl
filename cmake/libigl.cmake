@@ -374,25 +374,19 @@ if(LIBIGL_WITH_MMG)
     # message("MMG_DIR 1: ${MMG_DIR}")
     # set(ENV{MMG_DIR} ${MMG_DIR})
 
-    # set(MMG_INCDIR)
-    # set(MMG_LIBDIR)
-
-    # cereal dir
-    set(MMG_DIR "${TRAPPER_INSTALL_DIR}/lib/cmake/mmg")
-    find_package(MMG CONFIG REQUIRED)
-    
-    set(MMG_INCDIR "${TRAPPER_INSTALL_DIR}/include/mmg/common")
-    set(MMG_LIBDIR "${TRAPPER_INSTALL_DIR}/lib")
-    
+    # set(MMG_DIR "${TRAPPER_INSTALL_DIR}/lib/cmake/mmg")
+    # set(MMG_DIR "${TRAPPER_INSTALL_DIR}")
+    # find_package(MMG REQUIRED)
     # find_package(MMG CONFIG REQUIRED)
+    
+    set(MMG_INCDIR "${TRAPPER_INSTALL_DIR}/include")
+    set(MMG_LIBDIR "${TRAPPER_INSTALL_DIR}/lib")
+    find_package(MMG2D REQUIRED)
+    
     # find package
     message("MMG2D_INCLUDE_DIRS: ${MMG2D_INCLUDE_DIRS}")
     message("MMG2D_LIBRARIES: ${MMG2D_LIBRARIES}")
 
-    # # find package
-    # find_package(MMG2D REQUIRED)
-
-    
     # add dll for copying
     if(NOT LIBIGL_USE_STATIC_LIBRARY)
         add_library(MMG2D_DLL SHARED IMPORTED)
