@@ -348,11 +348,9 @@ if(LIBIGL_WITH_MMG)
 
     # check static libigl build
     if(LIBIGL_USE_STATIC_LIBRARY)
-        list(APPEND PACKAGE_OPTIONS -D BUILD_SHARED_LIBS=OFF)
         list(APPEND PACKAGE_OPTIONS -D LIBMMG2D_STATIC=ON)
         list(APPEND PACKAGE_OPTIONS -D LIBMMG2D_SHARED=OFF)
     else()
-        list(APPEND PACKAGE_OPTIONS -D BUILD_SHARED_LIBS=ON)
         list(APPEND PACKAGE_OPTIONS -D LIBMMG2D_STATIC=OFF)
         list(APPEND PACKAGE_OPTIONS -D LIBMMG2D_SHARED=ON)
     endif()  
@@ -360,33 +358,20 @@ if(LIBIGL_WITH_MMG)
     trapper_add_package(
         mmg
         https://github.com/kabukunz/mmg.git
-        libigl_integration_v570
+        0bd72572f1def664ce659ceed02d0ce013662e4e
         SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external"
         PACKAGE_OPTIONS ${PACKAGE_OPTIONS}
-        VERBOSE
         )    
 
     # mmg needs source dir for cmake scripts, default config scripts has errors
     list(APPEND CMAKE_MODULE_PATH "${TRAPPER_SOURCE_DIR}/cmake/tools")
         
-    # set mmg dir from prebuilt    
-    # set(MMG_DIR ${TRAPPER_INSTALL_DIR} CACHE STRING "MMG DIR")
-    # message("MMG_DIR 1: ${MMG_DIR}")
-    # set(ENV{MMG_DIR} ${MMG_DIR})
-
-    # set(MMG_INCDIR)
-    # set(MMG_LIBDIR)
-
-    # cereal dir
-    set(MMG_DIR "${TRAPPER_INSTALL_DIR}/lib/cmake/mmg")
+    # set mmg dir from prebuilt
+    set(MMG_DIR ${TRAPPER_INSTALL_DIR} CACHE STRING "MMG DIR")
 
     # find package
-    find_package(MMG CONFIG REQUIRED)
-    
-
-    # # find package
-    # find_package(MMG2D REQUIRED)
-    
+    find_package(MMG2D REQUIRED)
+        
     # add dll for copying
     if(NOT LIBIGL_USE_STATIC_LIBRARY)
         add_library(MMG2D_DLL SHARED IMPORTED)
