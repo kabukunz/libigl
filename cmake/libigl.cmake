@@ -51,12 +51,6 @@ if(LIBIGL_WITH_MMG AND LIBIGL_WITH_TRIANGLE)
   set(LIBIGL_WITH_MMG OFF CACHE BOOL "" FORCE)
 endif()
 
-if(NOT LIBIGL_WITH_MMG AND NOT LIBIGL_WITH_TRIANGLE)
-  message(WARNING "Must build either MMG or Triangle for CDT. Defaulting to Triangle")
-  set(LIBIGL_WITH_MMG OFF CACHE BOOL "" FORCE)
-  set(LIBIGL_WITH_TRIANGLE ON CACHE BOOL "" FORCE)
-endif()
-
 ################################################################################
 
 ### Configuration
@@ -354,9 +348,11 @@ if(LIBIGL_WITH_MMG)
 
     # check static libigl build
     if(LIBIGL_USE_STATIC_LIBRARY)
+        list(APPEND PACKAGE_OPTIONS -D BUILD_SHARED_LIBS=OFF)
         list(APPEND PACKAGE_OPTIONS -D LIBMMG2D_STATIC=ON)
         list(APPEND PACKAGE_OPTIONS -D LIBMMG2D_SHARED=OFF)
     else()
+        list(APPEND PACKAGE_OPTIONS -D BUILD_SHARED_LIBS=ON)
         list(APPEND PACKAGE_OPTIONS -D LIBMMG2D_STATIC=OFF)
         list(APPEND PACKAGE_OPTIONS -D LIBMMG2D_SHARED=ON)
     endif()  
@@ -373,11 +369,23 @@ if(LIBIGL_WITH_MMG)
     # mmg needs source dir for cmake scripts, default config scripts has errors
     list(APPEND CMAKE_MODULE_PATH "${TRAPPER_SOURCE_DIR}/cmake/tools")
         
-    # set mmg dir from prebuilt
-    set(MMG_DIR ${TRAPPER_INSTALL_DIR} CACHE STRING "MMG DIR")
+    # set mmg dir from prebuilt    
+    # set(MMG_DIR ${TRAPPER_INSTALL_DIR} CACHE STRING "MMG DIR")
+    # message("MMG_DIR 1: ${MMG_DIR}")
+    # set(ENV{MMG_DIR} ${MMG_DIR})
+
+    # set(MMG_INCDIR)
+    # set(MMG_LIBDIR)
+
+    # cereal dir
+    set(MMG_DIR "${TRAPPER_INSTALL_DIR}/lib/cmake/mmg")
 
     # find package
-    find_package(MMG2D REQUIRED)
+    find_package(MMG CONFIG REQUIRED)
+    
+
+    # # find package
+    # find_package(MMG2D REQUIRED)
     
     # add dll for copying
     if(NOT LIBIGL_USE_STATIC_LIBRARY)
@@ -389,7 +397,7 @@ if(LIBIGL_WITH_MMG)
   compile_igl_module("mmg")
   target_link_libraries(igl_mmg ${IGL_SCOPE} ${MMG2D_LIBRARIES})
   target_include_directories(igl_mmg ${IGL_SCOPE} ${MMG2D_INCLUDE_DIRS})
-  target_compile_definitions(igl_mmg ${IGL_SCOPE} -DLIBIGL_WITH_MMG)
+  target_compile_definitions(igl_mmg ${IGL_SCOPE} LIBIGL_WITH_MMG)
 endif()
 
 function(igl_copy_mmg_dll target)
@@ -620,7 +628,7 @@ if(LIBIGL_WITH_TRIANGLE)
   compile_igl_module("triangle")
   target_link_libraries(igl_triangle ${IGL_SCOPE} triangle)
   target_include_directories(igl_triangle ${IGL_SCOPE} ${TRIANGLE_DIR})
-  target_compile_definitions(igl_triangle ${IGL_SCOPE} -DLIBIGL_WITH_TRIANGLE)
+  target_compile_definitions(igl_triangle ${IGL_SCOPE} LIBIGL_WITH_TRIANGLE)
 endif()
 
 ################################################################################
