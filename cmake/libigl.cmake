@@ -51,12 +51,6 @@ if(LIBIGL_WITH_MMG AND LIBIGL_WITH_TRIANGLE)
   set(LIBIGL_WITH_MMG OFF CACHE BOOL "" FORCE)
 endif()
 
-if(NOT LIBIGL_WITH_MMG AND NOT LIBIGL_WITH_TRIANGLE)
-  message(WARNING "Must build either MMG or Triangle for CDT. Defaulting to Triangle")
-  set(LIBIGL_WITH_MMG OFF CACHE BOOL "" FORCE)
-  set(LIBIGL_WITH_TRIANGLE ON CACHE BOOL "" FORCE)
-endif()
-
 ################################################################################
 
 ### Configuration
