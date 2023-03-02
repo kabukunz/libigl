@@ -360,7 +360,7 @@ if(LIBIGL_WITH_MMG)
     trapper_add_package(
         mmg
         https://github.com/kabukunz/mmg.git
-        libigl_integration_v570
+        libigl_integration
         SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external"
         PACKAGE_OPTIONS ${PACKAGE_OPTIONS}
         VERBOSE
