@@ -358,7 +358,7 @@ if(LIBIGL_WITH_MMG)
     trapper_add_package(
         mmg
         https://github.com/kabukunz/mmg.git
-        0bd72572f1def664ce659ceed02d0ce013662e4e
+        libigl_integration
         SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external"
         PACKAGE_OPTIONS ${PACKAGE_OPTIONS}
         )    
@@ -371,7 +371,7 @@ if(LIBIGL_WITH_MMG)
 
     # find package
     find_package(MMG2D REQUIRED)
-        
+
     # add dll for copying
     if(NOT LIBIGL_USE_STATIC_LIBRARY)
         add_library(MMG2D_DLL SHARED IMPORTED)
