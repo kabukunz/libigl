@@ -46,11 +46,6 @@ if(LIBIGL_BUILD_PYTHON)
   message(FATAL_ERROR "Python bindings have been removed in this version. Please use an older version of libigl, or wait for the new bindings to be released.")
 endif()
 
-if(LIBIGL_WITH_MMG AND LIBIGL_WITH_TRIANGLE)
-  message(WARNING "Cannot build both MMG and Triangle for CDT. Defaulting to Triangle")
-  set(LIBIGL_WITH_MMG OFF CACHE BOOL "" FORCE)
-endif()
-
 ################################################################################
 
 ### Configuration
