@@ -55,7 +55,7 @@ IGL_INLINE bool triangulate(
     const Eigen::MatrixBase<DerivedH> & H,
     Eigen::PlainObjectBase<DerivedV2> & V2,
     Eigen::PlainObjectBase<DerivedF2> & F2,
-    MMGOptions &mmgOptions);        
+    MMGOptions &mmgOptions);
 }
 }
 }

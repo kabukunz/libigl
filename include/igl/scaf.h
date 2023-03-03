@@ -12,6 +12,10 @@
 #include "igl_inline.h"
 #include "MappingEnergyType.h"
 
+#ifdef LIBIGL_WITH_MMG
+#include <igl/mmg/triangulate.h>
+#endif
+
 namespace igl
 {
     // Use a similar interface to igl::slim
@@ -74,7 +78,7 @@ namespace igl
         Eigen::MatrixXd W_m, W_s;
 
         // remeshing options
-        MMGOptions o;
+        igl::mmg::mmg2d::MMGOptions o;
 
         // remeshing errors
         SCAFError e;

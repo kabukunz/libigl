@@ -6,10 +6,6 @@
 // v. 2.0. If a copy of the MPL was not distributed with this file, You can
 // obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifdef LIBIGL_WITH_MMG
-#include <igl/mmg/triangulate.h>
-#endif
-
 #ifdef LIBIGL_WITH_TRIANGLE
 #include <igl/triangle/triangulate.h>
 #endif
@@ -664,7 +660,7 @@ IGL_INLINE bool igl::scaf_precompute(
     Eigen::MatrixXd CN;
     Eigen::MatrixXi FN;
     
-    if(!igl::scaf::add_new_patch(data, V, F, Eigen::RowVector2d(0, 0), V_init, e))
+    if(!igl::scaf::add_new_patch(data, V, F, Eigen::RowVector2d(0, 0), V_init))
         return false;
 
     data.soft_const_p = soft_p;
@@ -730,7 +726,7 @@ IGL_INLINE bool igl::scaf_solve(SCAFData &s, int iter_num)
     {
         s.total_energy = igl::scaf::compute_energy(s, s.w_uv, true) / s.mesh_measure;
         s.rect_frame_V = Eigen::MatrixXd();
-        if(!igl::scaf::mesh_improve(s, e))
+        if(!igl::scaf::mesh_improve(s))
             return false;
 
         double new_weight = s.mesh_measure * s.energy / (s.sf_num * 100);
