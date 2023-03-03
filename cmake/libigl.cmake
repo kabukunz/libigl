@@ -335,16 +335,12 @@ if(LIBIGL_WITH_MMG)
     
     # tool options
     list(APPEND PACKAGE_OPTIONS -D CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
-    list(APPEND PACKAGE_OPTIONS -D CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON)    
     list(APPEND PACKAGE_OPTIONS -D BUILD=MMG2D)
     list(APPEND PACKAGE_OPTIONS -D USE_SCOTCH=OFF)
     list(APPEND PACKAGE_OPTIONS -D USE_ELAS=OFF)
     list(APPEND PACKAGE_OPTIONS -D USE_VTK=OFF)
     list(APPEND PACKAGE_OPTIONS -D BUILD_TESTING=OFF)
     list(APPEND PACKAGE_OPTIONS -D TEST_LIBMMG2D=OFF)
-
-    # NOTE: mmg build in both static and shared library mode causes static mmg2d.lib to be overwritten
-    # mmg2d_O3.exe is always built static and build fails if static library is missing. libs are ok
 
     # check static libigl build
     if(LIBIGL_USE_STATIC_LIBRARY)
@@ -366,24 +362,13 @@ if(LIBIGL_WITH_MMG)
     # mmg needs source dir for cmake scripts, default config scripts has errors
     list(APPEND CMAKE_MODULE_PATH "${TRAPPER_SOURCE_DIR}/cmake/tools")
         
-    # set mmg dir from prebuilt    
-    # set(MMG_DIR ${TRAPPER_INSTALL_DIR} CACHE STRING "MMG DIR")
-    # message("MMG_DIR 1: ${MMG_DIR}")
-    # set(ENV{MMG_DIR} ${MMG_DIR})
-
-    # set(MMG_DIR "${TRAPPER_INSTALL_DIR}/lib/cmake/mmg")
-    # set(MMG_DIR "${TRAPPER_INSTALL_DIR}")
-    # find_package(MMG REQUIRED)
-    # find_package(MMG CONFIG REQUIRED)
-    
+    # set mmg dir from prebuilt
     set(MMG_INCDIR "${TRAPPER_INSTALL_DIR}/include")
     set(MMG_LIBDIR "${TRAPPER_INSTALL_DIR}/lib")
-    find_package(MMG2D REQUIRED)
     
     # find package
-    message("MMG2D_INCLUDE_DIRS: ${MMG2D_INCLUDE_DIRS}")
-    message("MMG2D_LIBRARIES: ${MMG2D_LIBRARIES}")
-
+    find_package(MMG2D REQUIRED)
+    
     # add dll for copying
     if(NOT LIBIGL_USE_STATIC_LIBRARY)
         add_library(MMG2D_DLL SHARED IMPORTED)
