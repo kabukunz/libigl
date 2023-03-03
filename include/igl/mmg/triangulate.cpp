@@ -13,18 +13,18 @@
 #endif
 
 template <
- typename DerivedV,
- typename DerivedE,
- typename DerivedH, 
- typename DerivedV2,
- typename DerivedF2>
-IGL_INLINE bool igl::mmg::triangulate(
-  const Eigen::MatrixBase<DerivedV> & V,
-  const Eigen::MatrixBase<DerivedE> & E,
-  const Eigen::MatrixBase<DerivedH> & H,
-  Eigen::PlainObjectBase<DerivedV2> & V2,
-  Eigen::PlainObjectBase<DerivedF2> & F2
-  )
+    typename DerivedV,
+    typename DerivedE,
+    typename DerivedH,
+    typename DerivedV2,
+    typename DerivedF2>
+IGL_INLINE bool igl::mmg::mmg2d::triangulate(
+    const Eigen::MatrixBase<DerivedV> &V,
+    const Eigen::MatrixBase<DerivedE> &E,
+    const Eigen::MatrixBase<DerivedH> &H,
+    Eigen::PlainObjectBase<DerivedV2> &V2,
+    Eigen::PlainObjectBase<DerivedF2> &F2,
+    MMGOptions &mmgOptions)
 {
 
     // V, E are required for Scaf
