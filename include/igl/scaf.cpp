@@ -6,10 +6,6 @@
 // v. 2.0. If a copy of the MPL was not distributed with this file, You can
 // obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifdef LIBIGL_WITH_MMG
-#include <igl/mmg/triangulate.h>
-#endif
-
 #ifdef LIBIGL_WITH_TRIANGLE
 #include <igl/triangle/triangulate.h>
 #endif
@@ -144,7 +140,7 @@ void compute_scaffold_gradient_matrix(SCAFData &s,
             F2.col(2).asDiagonal() * Dz;
 }
 
-bool mesh_improve(igl::SCAFData &s, SCAFError &e)
+bool mesh_improve(igl::SCAFData &s)
 {
     using namespace Eigen;
     MatrixXd m_uv = s.w_uv.topRows(s.mv_num);
@@ -223,36 +219,17 @@ bool mesh_improve(igl::SCAFData &s, SCAFError &e)
 
     MatrixXd uv2;
 
-    // check for mini patches numerical errors
+    // check for numerical errors
     if (!V.allFinite())
     {
-        e = SCAFError::NUMERICAL;
+        s.e = SCAFError::NUMERICAL;
         return false;
     }
 
 #ifdef LIBIGL_WITH_MMG
-    mmg::mmg2d::MMGOptions mmgOptions = {};
-    
-    // NOTE: MMG equivalent of Triangle string options
-    
-    // force hard angles on borders (do not modify scaffold squared edges)
-    mmgOptions.mmg2d_angleDetection = 0.1;
-
-    // do not insert steiner points (do not modify original scaffold vertices)
-    mmgOptions.mmg2d_noInsert = 1;
-
-    // remeshing quality angles constraint (as Delaunay as possible)
-    mmgOptions.mmg2d_hgrad = 1.0;
-
-    // remeshing accuracy (on the boundaries and as a fraction of their bounding box)
-    mmgOptions.mmg2d_hausd = 0.0001;
-
-    // mmg2d_verbose level (-1 is silent)
-    mmgOptions.mmg2d_verbose = -1;
-
-    if(!igl::mmg::mmg2d::triangulate(V, E, H, uv2, s.s_T, mmgOptions))
+    if(!igl::mmg::mmg2d::triangulate(V, E, H, uv2, s.s_T, s.o))
     {
-        e = SCAFError::CDT2D;
+        s.e = SCAFError::CDT2D;
         return false;
     }
 #endif
@@ -295,8 +272,7 @@ bool mesh_improve(igl::SCAFData &s, SCAFError &e)
 bool add_new_patch(igl::SCAFData &s, const Eigen::MatrixXd &V_ref,
                     const Eigen::MatrixXi &F_ref,
                     const Eigen::RowVectorXd &center,
-                    const Eigen::MatrixXd &uv_init,
-                    SCAFError &e)
+                    const Eigen::MatrixXd &uv_init)
 {
     using namespace std;
     using namespace Eigen;
@@ -338,7 +314,7 @@ bool add_new_patch(igl::SCAFData &s, const Eigen::MatrixXd &V_ref,
 
     s.rect_frame_V = MatrixXd();
 
-    if (!mesh_improve(s, e))
+    if (!mesh_improve(s))
         return false;
 
     return true;
@@ -679,13 +655,12 @@ IGL_INLINE bool igl::scaf_precompute(
     igl::MappingEnergyType slim_energy,
     Eigen::VectorXi &b,
     Eigen::MatrixXd &bc,
-    double soft_p,
-    SCAFError &e)
+    double soft_p)
 {
     Eigen::MatrixXd CN;
     Eigen::MatrixXi FN;
     
-    if(!igl::scaf::add_new_patch(data, V, F, Eigen::RowVector2d(0, 0), V_init, e))
+    if(!igl::scaf::add_new_patch(data, V, F, Eigen::RowVector2d(0, 0), V_init))
         return false;
 
     data.soft_const_p = soft_p;
@@ -741,7 +716,7 @@ IGL_INLINE bool igl::scaf_precompute(
     return true;
 }
 
-IGL_INLINE bool igl::scaf_solve(SCAFData &s, int iter_num, SCAFError &e)
+IGL_INLINE bool igl::scaf_solve(SCAFData &s, int iter_num)
 {
     using namespace std;
     using namespace Eigen;
@@ -751,7 +726,7 @@ IGL_INLINE bool igl::scaf_solve(SCAFData &s, int iter_num, SCAFError &e)
     {
         s.total_energy = igl::scaf::compute_energy(s, s.w_uv, true) / s.mesh_measure;
         s.rect_frame_V = Eigen::MatrixXd();
-        if(!igl::scaf::mesh_improve(s, e))
+        if(!igl::scaf::mesh_improve(s))
             return false;
 
         double new_weight = s.mesh_measure * s.energy / (s.sf_num * 100);
@@ -764,9 +739,6 @@ IGL_INLINE bool igl::scaf_solve(SCAFData &s, int iter_num, SCAFError &e)
             igl::scaf::compute_energy(s, s.w_uv, false) / s.mesh_measure;
     }
 
-    // NOTE: patching scaf computing non-finite values adding error checks
-    // if patches are very small-sized and EIGEN_INITIALIZE_MATRICES_BY_NAN=1
-    
     // return s.w_uv.topRows(s.mv_num);
     return true;
 }

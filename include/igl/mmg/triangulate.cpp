@@ -34,8 +34,8 @@ IGL_INLINE bool igl::mmg::mmg2d::triangulate(
 #ifdef LIBIGL_WITH_MMG
 
     // vars
-    MMG5_pMesh mesh = NULL;
-    MMG5_pSol met = NULL;
+    MMG5_pMesh mmgMesh = NULL;
+    MMG5_pSol mmgSol = NULL;
     int np = {};
     int nt = {};
     int nquad = {};
@@ -51,8 +51,8 @@ IGL_INLINE bool igl::mmg::mmg2d::triangulate(
 
     // NOTE: Eigen indices start at 0, MMGS indices start at 1
 
-    // init mesh
-    ier = MMG2D_Init_mesh(MMG5_ARG_start, MMG5_ARG_ppMesh, &mesh, MMG5_ARG_ppMet, &met, MMG5_ARG_end);
+    // init mmgMesh
+    ier = MMG2D_Init_mesh(MMG5_ARG_start, MMG5_ARG_ppMesh, &mmgMesh, MMG5_ARG_ppMet, &mmgSol, MMG5_ARG_end);
     if (!ier)
         return false;
 
@@ -61,15 +61,7 @@ IGL_INLINE bool igl::mmg::mmg2d::triangulate(
     // mmg2d_verbose level
     if (mmgOptions.mmg2d_verbose)
     {
-        ier = MMG2D_Set_iparameter(mesh, met, MMG2D_IPARAM_verbose, mmgOptions.mmg2d_verbose.value());
-        if (!ier)
-            return false;
-    }
-
-    // angle detection on borders
-    if (mmgOptions.mmg2d_angleDetection)
-    {
-        ier = MMG2D_Set_dparameter(mesh, met, MMG2D_DPARAM_angleDetection, mmgOptions.mmg2d_angleDetection.value());
+        ier = MMG2D_Set_iparameter(mmgMesh, mmgSol, MMG2D_IPARAM_verbose, mmgOptions.mmg2d_verbose.value());
         if (!ier)
             return false;
     }
@@ -77,7 +69,15 @@ IGL_INLINE bool igl::mmg::mmg2d::triangulate(
     // do not insert steiner points
     if (mmgOptions.mmg2d_noInsert)
     {
-        ier = MMG2D_Set_iparameter(mesh, met, MMG2D_IPARAM_noinsert, mmgOptions.mmg2d_noInsert.value());
+        ier = MMG2D_Set_iparameter(mmgMesh, mmgSol, MMG2D_IPARAM_noinsert, mmgOptions.mmg2d_noInsert.value());
+        if (!ier)
+            return false;
+    }
+
+    // angle detection on borders
+    if (mmgOptions.mmg2d_angleDetection)
+    {
+        ier = MMG2D_Set_dparameter(mmgMesh, mmgSol, MMG2D_DPARAM_angleDetection, mmgOptions.mmg2d_angleDetection.value());
         if (!ier)
             return false;
     }
@@ -85,7 +85,7 @@ IGL_INLINE bool igl::mmg::mmg2d::triangulate(
     // remeshing quality
     if (mmgOptions.mmg2d_hgrad)
     {
-        ier = MMG2D_Set_dparameter(mesh, met, MMG2D_DPARAM_hgrad, mmgOptions.mmg2d_hgrad.value());
+        ier = MMG2D_Set_dparameter(mmgMesh, mmgSol, MMG2D_DPARAM_hgrad, mmgOptions.mmg2d_hgrad.value());
         if (!ier)
             return false;
     }
@@ -93,15 +93,31 @@ IGL_INLINE bool igl::mmg::mmg2d::triangulate(
     // remeshing accuracy
     if (mmgOptions.mmg2d_hausd)
     {
-        ier = MMG2D_Set_dparameter(mesh, met, MMG2D_DPARAM_hausd, mmgOptions.mmg2d_hausd.value());
+        ier = MMG2D_Set_dparameter(mmgMesh, mmgSol, MMG2D_DPARAM_hausd, mmgOptions.mmg2d_hausd.value());
         if (!ier)
             return false;
     }
 
-    // edge size
+    // remeshing size
     if (mmgOptions.mmg2d_hsiz)
     {
-        ier = MMG2D_Set_dparameter(mesh, met, MMG2D_DPARAM_hsiz, mmgOptions.mmg2d_hsiz.value());
+        ier = MMG2D_Set_dparameter(mmgMesh, mmgSol, MMG2D_DPARAM_hsiz, mmgOptions.mmg2d_hsiz.value());
+        if (!ier)
+            return false;
+    }
+
+    // normals smoothing
+    if (mmgOptions.mmg2d_nreg)
+    {
+        ier = MMG2D_Set_iparameter(mmgMesh, mmgSol, MMG2D_IPARAM_nreg, mmgOptions.mmg2d_nreg.value());
+        if (!ier)
+            return false;
+    }
+
+    // vertices smoothing
+    if (mmgOptions.mmg2d_xreg)
+    {
+        ier = MMG2D_Set_iparameter(mmgMesh, mmgSol, MMG2D_IPARAM_xreg, mmgOptions.mmg2d_xreg.value());
         if (!ier)
             return false;
     }
@@ -110,8 +126,8 @@ IGL_INLINE bool igl::mmg::mmg2d::triangulate(
     np = V.rows();
     na = E.rows();
 
-    // create mesh: vertices and edges
-    ier = MMG2D_Set_meshSize(mesh, np, nt, nquad, na);
+    // create mmgMesh: vertices and edges
+    ier = MMG2D_Set_meshSize(mmgMesh, np, nt, nquad, na);
     if (!ier)
         return false;
 
@@ -128,7 +144,7 @@ IGL_INLINE bool igl::mmg::mmg2d::triangulate(
         verts_in[verts_size * i + 1] = y;
     }
     // set vertices
-    MMG2D_Set_vertices(mesh, verts_in, NULL);
+    MMG2D_Set_vertices(mmgMesh, verts_in, NULL);
 
     // insert edges as single border
     if (na)
@@ -147,24 +163,24 @@ IGL_INLINE bool igl::mmg::mmg2d::triangulate(
         }
 
         // set edges
-        ier = MMG2D_Set_edges(mesh, edges_in, NULL);
+        ier = MMG2D_Set_edges(mmgMesh, edges_in, NULL);
         if (!ier)
             return false;
     }
 
-    // generate a regular fine mesh of the square in meshing mode
-    ier = MMG2D_mmg2dmesh(mesh, met);
+    // generate a regular fine mmgMesh of the square in meshing mode
+    ier = MMG2D_mmg2dmesh(mmgMesh, mmgSol);
     if (ier != MMG5_SUCCESS)
         return false;
 
-    // get mesh
-    MMG2D_Get_meshSize(mesh, &np, &nt, &nquad, &na);
+    // get mmgMesh
+    MMG2D_Get_meshSize(mmgMesh, &np, &nt, &nquad, &na);
 
     // set vertices
     verts_out = (double *)malloc(verts_size * np * sizeof(double));
 
     // get vertices
-    MMG2D_Get_vertices(mesh, verts_out, NULL, NULL, NULL);
+    MMG2D_Get_vertices(mmgMesh, verts_out, NULL, NULL, NULL);
 
     V2.resize(np, verts_size);
     for (int i = 0; i < np; i++)
@@ -180,7 +196,7 @@ IGL_INLINE bool igl::mmg::mmg2d::triangulate(
     tris_out = (int *)malloc(tris_size * nt * sizeof(int));
 
     // get tris
-    ier = MMG2D_Get_triangles(mesh, tris_out, NULL, NULL);
+    ier = MMG2D_Get_triangles(mmgMesh, tris_out, NULL, NULL);
     if (!ier)
         return false;
 
@@ -204,7 +220,7 @@ IGL_INLINE bool igl::mmg::mmg2d::triangulate(
     free(verts_out);
     free(tris_out);
 
-    ier = MMG2D_Free_all(MMG5_ARG_start, MMG5_ARG_ppMesh, &mesh, MMG5_ARG_ppMet, &met, MMG5_ARG_end);
+    ier = MMG2D_Free_all(MMG5_ARG_start, MMG5_ARG_ppMesh, &mmgMesh, MMG5_ARG_ppMet, &mmgSol, MMG5_ARG_end);
     if (!ier)
         return false;
 

@@ -19,15 +19,17 @@ namespace mmg
 namespace mmg2d
 {
 
-// MMG options data structure
+// MMG data structure
 struct MMGOptions
 {        
-    std::optional<int> mmg2d_noInsert = {};
+    std::optional<int> mmg2d_verbose = -1;
+    std::optional<int> mmg2d_noInsert = 1;
     std::optional<double> mmg2d_angleDetection = {}; 
-    std::optional<double> mmg2d_hgrad = {};
+    std::optional<double> mmg2d_hgrad = 1.0;
     std::optional<double> mmg2d_hsiz = {};
-    std::optional<int> mmg2d_verbose = {};
     std::optional<double> mmg2d_hausd = {};
+    std::optional<int> mmg2d_nreg = {};
+    std::optional<int> mmg2d_xreg = {};
 };
 
 // Triangulate the interior of a polygon using the mmg library.
@@ -53,7 +55,7 @@ IGL_INLINE bool triangulate(
     const Eigen::MatrixBase<DerivedH> & H,
     Eigen::PlainObjectBase<DerivedV2> & V2,
     Eigen::PlainObjectBase<DerivedF2> & F2,
-    MMGOptions &mmgOptions);        
+    MMGOptions &mmgOptions);
 }
 }
 }
