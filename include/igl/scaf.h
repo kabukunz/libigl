@@ -72,6 +72,12 @@ namespace igl
         Eigen::SparseMatrix<double> Dx_m, Dy_m, Dz_m;
         Eigen::MatrixXd Ri_m, Ji_m, Ri_s, Ji_s;
         Eigen::MatrixXd W_m, W_s;
+
+        // remeshing options
+        MMGOptions o;
+
+        // remeshing errors
+        SCAFError e;
     };
 
     // Compute necessary information to start using SCAF
@@ -91,13 +97,12 @@ namespace igl
         MappingEnergyType slim_energy,
         Eigen::VectorXi &b,
         Eigen::MatrixXd &bc,
-        double soft_p,
-        SCAFError &e);
+        double soft_p);
 
     // Run iter_num iterations of SCAF, with precomputed data
     // Outputs:
     //    V_o (in SLIMData): #V by dim list of mesh vertex positions
-    IGL_INLINE bool scaf_solve(SCAFData &data, int iter_num, SCAFError &e);
+    IGL_INLINE bool scaf_solve(SCAFData &data, int iter_num);
 }
 
 #ifndef IGL_STATIC_LIBRARY

@@ -19,14 +19,14 @@ namespace mmg
 namespace mmg2d
 {
 
-// MMG options data structure
+// MMG data structure
 struct MMGOptions
 {        
-    std::optional<int> mmg2d_verbose = {};
-    std::optional<int> mmg2d_noInsert = {};
+    std::optional<int> mmg2d_verbose = -1;
+    std::optional<int> mmg2d_noInsert = 1;
     std::optional<double> mmg2d_angleDetection = {}; 
+    std::optional<double> mmg2d_hgrad = 1.0;
     std::optional<double> mmg2d_hsiz = {};
-    std::optional<double> mmg2d_hgrad = {};
     std::optional<double> mmg2d_hausd = {};
     std::optional<int> mmg2d_nreg = {};
     std::optional<int> mmg2d_xreg = {};
