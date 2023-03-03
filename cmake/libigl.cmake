@@ -366,11 +366,23 @@ if(LIBIGL_WITH_MMG)
     # mmg needs source dir for cmake scripts, default config scripts has errors
     list(APPEND CMAKE_MODULE_PATH "${TRAPPER_SOURCE_DIR}/cmake/tools")
         
-    # set mmg dir from prebuilt
-    set(MMG_DIR ${TRAPPER_INSTALL_DIR} CACHE STRING "MMG DIR")
+    # set mmg dir from prebuilt    
+    # set(MMG_DIR ${TRAPPER_INSTALL_DIR} CACHE STRING "MMG DIR")
+    # message("MMG_DIR 1: ${MMG_DIR}")
+    # set(ENV{MMG_DIR} ${MMG_DIR})
 
-    # find package
+    # set(MMG_DIR "${TRAPPER_INSTALL_DIR}/lib/cmake/mmg")
+    # set(MMG_DIR "${TRAPPER_INSTALL_DIR}")
+    # find_package(MMG REQUIRED)
+    # find_package(MMG CONFIG REQUIRED)
+    
+    set(MMG_INCDIR "${TRAPPER_INSTALL_DIR}/include")
+    set(MMG_LIBDIR "${TRAPPER_INSTALL_DIR}/lib")
     find_package(MMG2D REQUIRED)
+    
+    # find package
+    message("MMG2D_INCLUDE_DIRS: ${MMG2D_INCLUDE_DIRS}")
+    message("MMG2D_LIBRARIES: ${MMG2D_LIBRARIES}")
 
     # add dll for copying
     if(NOT LIBIGL_USE_STATIC_LIBRARY)
