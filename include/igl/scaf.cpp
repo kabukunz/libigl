@@ -227,15 +227,21 @@ bool mesh_improve(igl::SCAFData &s)
     }
 
 #ifdef LIBIGL_WITH_MMG
-    if(!igl::mmg::mmg2d::triangulate(V, E, H, uv2, s.s_T, s.o))
+    if(s.r == SCAFRemesher::MMG)
     {
-        s.e = SCAFError::CDT2D;
-        return false;
+        if(!igl::mmg::mmg2d::triangulate(V, E, H, uv2, s.s_T, s.o))
+        {
+            s.e = SCAFError::CDT2D;
+            return false;
+        }
     }
 #endif
 
 #ifdef LIBIGL_WITH_TRIANGLE
-    igl::triangle::triangulate(V, E, H, std::basic_string<char>("qYYQ"), uv2, s.s_T);
+    if(s.r == SCAFRemesher::TRIANGLE)
+    {
+        igl::triangle::triangulate(V, E, H, std::basic_string<char>("qYYQ"), uv2, s.s_T);
+    }
 #endif
 
     auto bnd_n = s.internal_bnd.size();
