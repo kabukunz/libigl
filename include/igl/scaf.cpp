@@ -227,7 +227,7 @@ bool mesh_improve(igl::SCAFData &s)
     }
 
 #ifdef LIBIGL_WITH_MMG
-    if(s.r = SCAFRemesher::MMG)
+    if(s.r == SCAFRemesher::MMG)
     {
         if(!igl::mmg::mmg2d::triangulate(V, E, H, uv2, s.s_T, s.o))
         {
@@ -238,7 +238,7 @@ bool mesh_improve(igl::SCAFData &s)
 #endif
 
 #ifdef LIBIGL_WITH_TRIANGLE
-    if(s.r = SCAFRemesher::TRIANGLE)
+    if(s.r == SCAFRemesher::TRIANGLE)
     {
         igl::triangle::triangulate(V, E, H, std::basic_string<char>("qYYQ"), uv2, s.s_T);
     }
