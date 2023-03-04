@@ -168,7 +168,7 @@ IGL_INLINE bool igl::mmg::mmg2d::triangulate(
             return false;
     }
 
-    // generate a regular fine mmgMesh of the square in meshing mode
+    // remesh
     ier = MMG2D_mmg2dmesh(mmgMesh, mmgSol);
     if (ier != MMG5_SUCCESS)
         return false;
