@@ -229,10 +229,13 @@ bool mesh_improve(igl::SCAFData &s)
 #ifdef LIBIGL_WITH_MMG
     if(s.r == SCAFRemesher::MMG)
     {
-        if(!igl::mmg::mmg2d::triangulate(V, E, H, uv2, s.s_T, s.o))
+        for (size_t i = 0; i < s.o.mmg2d_iter; i++)
         {
-            s.e = SCAFError::CDT2D;
-            return false;
+            if(!igl::mmg::mmg2d::triangulate(V, E, H, uv2, s.s_T, s.o))
+            {
+                s.e = SCAFError::CDT2D;
+                return false;
+            }
         }
     }
 #endif

@@ -30,6 +30,7 @@ struct MMGOptions
     std::optional<double> mmg2d_hausd = {};
     std::optional<int> mmg2d_nreg = {};
     std::optional<int> mmg2d_xreg = {};
+    std::optional<int> mmg2d_iter = 1;
 };
 
 // Triangulate the interior of a polygon using the mmg library.
