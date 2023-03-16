@@ -488,14 +488,21 @@ bool add_new_patch(igl::SCAFData &s, const Eigen::MatrixXd &V_ref,
 
     s.rect_frame_V = MatrixXd();
 
+    if (!mesh_improve(s))
+        return false;
+
+    return true;
+}
+
+    if(!scaf_remesh_step(s))
+        return true;
+
     if (!mesh_improve_pre(s))
         return false;
 
     if (!mesh_improve_post(s))
         return false;
 
-    return true;
-}
 
 // bool add_new_patch_improve(igl::SCAFData &s)
 // {
@@ -930,37 +937,34 @@ IGL_INLINE bool igl::scaf_solve(SCAFData &s, int iter_num)
     return true;
 }
 
-IGL_INLINE bool igl::scaf_solve_pre(SCAFData &s)
+IGL_INLINE bool igl::scaf_solve_init(SCAFData &s)
 {
-    using namespace std;
-    using namespace Eigen;
     s.energy = igl::scaf::compute_energy(s, s.w_uv, false) / s.mesh_measure;
-
-    // for (int it = 0; it < iter_num; it++)
-    // {
-        s.total_energy = igl::scaf::compute_energy(s, s.w_uv, true) / s.mesh_measure;
-        s.rect_frame_V = Eigen::MatrixXd();
-
-        // if(!igl::scaf::mesh_improve(s))
-        //     return false;
-
-        // double new_weight = s.mesh_measure * s.energy / (s.sf_num * 100);
-        // s.scaffold_factor = new_weight;
-        // igl::scaf::update_scaffold(s);
-
-        // s.total_energy = igl::scaf::perform_iteration(s);
-
-        // s.energy =
-        //     igl::scaf::compute_energy(s, s.w_uv, false) / s.mesh_measure;
-    // }
-
-    // return s.w_uv.topRows(s.mv_num);
     return true;
 }
 
-IGL_INLINE bool igl::scaf_solve_remesh(SCAFData &s)
+IGL_INLINE bool igl::scaf_solve_pre(SCAFData &s)
 {
-    if(!igl::scaf::mesh_improve(s))
+    s.total_energy = igl::scaf::compute_energy(s, s.w_uv, true) / s.mesh_measure;
+    s.rect_frame_V = Eigen::MatrixXd();
+
+    return true;
+}
+
+IGL_INLINE bool igl::scaf_remesh_step(SCAFData &s)
+{
+    MatrixXd V;
+    MatrixXi E;
+    MatrixXd H;
+
+    if(!mesh_improve_pre(s, V, E, H))
+        return false;
+
+    MatrixXd uv2;
+    if(!mesh_improve_remesh(s, V, E, H, uv2))
+        return false;
+
+    if(!mesh_improve_post(uv2, s))
         return false;
 
     return true;
@@ -968,31 +972,39 @@ IGL_INLINE bool igl::scaf_solve_remesh(SCAFData &s)
 
 IGL_INLINE bool igl::scaf_solve_post(SCAFData &s)
 {
-    using namespace std;
-    using namespace Eigen;
-    // s.energy = igl::scaf::compute_energy(s, s.w_uv, false) / s.mesh_measure;
+    
+    double new_weight = s.mesh_measure * s.energy / (s.sf_num * 100);
+    s.scaffold_factor = new_weight;
+    igl::scaf::update_scaffold(s);
 
-    // for (int it = 0; it < iter_num; it++)
-    // {
-        // s.total_energy = igl::scaf::compute_energy(s, s.w_uv, true) / s.mesh_measure;
-        // s.rect_frame_V = Eigen::MatrixXd();
+    s.total_energy = igl::scaf::perform_iteration(s);
 
-        // if(!igl::scaf::mesh_improve(s))
-        //     return false;
+    s.energy =
+        igl::scaf::compute_energy(s, s.w_uv, false) / s.mesh_measure;
 
-        double new_weight = s.mesh_measure * s.energy / (s.sf_num * 100);
-        s.scaffold_factor = new_weight;
-        igl::scaf::update_scaffold(s);
+    return true;
+}
 
-        s.total_energy = igl::scaf::perform_iteration(s);
+IGL_INLINE bool igl::scaf_solve_step(SCAFData &s, int iter_num)
+{
+    if(!scaf_solve_init())
+        return true;
 
-        s.energy =
-            igl::scaf::compute_energy(s, s.w_uv, false) / s.mesh_measure;
-    // }
+    for (int it = 0; it < iter_num; it++)
+    {
+        if(!scaf_solve_pre(s))
+            return true;
 
-    // return s.w_uv.topRows(s.mv_num);
+        if(!scaf_remesh_step(s))
+            return true;
+
+        if(!scaf_solve_post(s))
+            return true;
+    }
+
     return true;
 }
 
 #ifdef IGL_STATIC_LIBRARY
 #endif
+
