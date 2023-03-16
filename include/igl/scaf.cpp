@@ -140,334 +140,6 @@ void compute_scaffold_gradient_matrix(SCAFData &s,
             F2.col(2).asDiagonal() * Dz;
 }
 
-bool mesh_improve(igl::SCAFData &s)
-{
-    using namespace Eigen;
-    MatrixXd m_uv = s.w_uv.topRows(s.mv_num);
-    MatrixXd V_bnd;
-    V_bnd.resize(s.internal_bnd.size(), 2);
-    for (int i = 0; i < s.internal_bnd.size(); i++) // redoing step 1.
-    {
-        V_bnd.row(i) = m_uv.row(s.internal_bnd(i));
-    }
-
-    if (s.rect_frame_V.size() == 0)
-    {
-        Matrix2d ob; // = rect_corners;
-        {
-            VectorXd uv_max = m_uv.colwise().maxCoeff();
-            VectorXd uv_min = m_uv.colwise().minCoeff();
-            VectorXd uv_mid = (uv_max + uv_min) / 2.;
-
-            Eigen::Array2d scaf_range(3, 3);
-            ob.row(0) = uv_mid.array() + scaf_range * ((uv_min - uv_mid).array());
-            ob.row(1) = uv_mid.array() + scaf_range * ((uv_max - uv_mid).array());
-        }
-        Vector2d rect_len;
-        rect_len << ob(1, 0) - ob(0, 0), ob(1, 1) - ob(0, 1);
-        int frame_points = 5;
-
-        s.rect_frame_V.resize(4 * frame_points, 2);
-        for (int i = 0; i < frame_points; i++)
-        {
-            // 0,0;0,1
-            s.rect_frame_V.row(i) << ob(0, 0), ob(0, 1) + i * rect_len(1) / frame_points;
-            // 0,0;1,1
-            s.rect_frame_V.row(i + frame_points)
-                << ob(0, 0) + i * rect_len(0) / frame_points,
-                ob(1, 1);
-            // 1,0;1,1
-            s.rect_frame_V.row(i + 2 * frame_points) << ob(1, 0), ob(1, 1) - i * rect_len(1) / frame_points;
-            // 1,0;0,1
-            s.rect_frame_V.row(i + 3 * frame_points)
-                << ob(1, 0) - i * rect_len(0) / frame_points,
-                ob(0, 1);
-            // 0,0;0,1
-        }
-        s.frame_ids = Eigen::VectorXi::LinSpaced(s.rect_frame_V.rows(), s.mv_num, s.mv_num + s.rect_frame_V.rows());
-    }
-
-    // Concatenate Vert and Edge
-    MatrixXd V;
-    MatrixXi E;
-    igl::cat(1, V_bnd, s.rect_frame_V, V);
-    E.resize(V.rows(), 2);
-    for (int i = 0; i < E.rows(); i++)
-        E.row(i) << i, i + 1;
-    int acc_bs = 0;
-    for (auto bs : s.bnd_sizes)
-    {
-        E(acc_bs + bs - 1, 1) = acc_bs;
-        acc_bs += bs;
-    }
-    E(V.rows() - 1, 1) = acc_bs;
-    assert(acc_bs == s.internal_bnd.size());
-
-    MatrixXd H = MatrixXd::Zero(s.component_sizes.size(), 2);
-    {
-        int hole_f = 0;
-        int hole_i = 0;
-        for (auto cs : s.component_sizes)
-        {
-            for (int i = 0; i < 3; i++)
-                H.row(hole_i) += m_uv.row(s.m_T(hole_f, i)); // redoing step 2
-            hole_f += cs;
-            hole_i++;
-        }
-    }
-    H /= 3.;
-
-    MatrixXd uv2;
-
-    // check for numerical errors
-    if (!V.allFinite())
-    {
-        s.e = SCAFError::NUMERICAL;
-        return false;
-    }
-
-#ifdef LIBIGL_WITH_MMG
-    if(s.r == SCAFRemesher::MMG)
-    {
-        for (size_t i = 0; i < s.o.mmg2d_iter; i++)
-        {
-            if(!igl::mmg::mmg2d::triangulate(V, E, H, uv2, s.s_T, s.o))
-            {
-                s.e = SCAFError::CDT2D;
-                return false;
-            }
-        }
-    }
-#endif
-
-#ifdef LIBIGL_WITH_TRIANGLE
-    if(s.r == SCAFRemesher::TRIANGLE)
-    {
-        igl::triangle::triangulate(V, E, H, std::basic_string<char>("qYYQ"), uv2, s.s_T);
-    }
-#endif
-
-    auto bnd_n = s.internal_bnd.size();
-
-    for (auto i = 0; i < s.s_T.rows(); i++)
-        for (auto j = 0; j < s.s_T.cols(); j++)
-        {
-            auto &x = s.s_T(i, j);
-            if (x < bnd_n)
-                x = s.internal_bnd(x);
-            else
-                x += m_uv.rows() - bnd_n;
-        }
-
-    igl::cat(1, s.m_T, s.s_T, s.w_T);
-    s.w_uv.conservativeResize(m_uv.rows() - bnd_n + uv2.rows(), 2);
-    s.w_uv.bottomRows(uv2.rows() - bnd_n) = uv2.bottomRows(-bnd_n + uv2.rows());
-
-    update_scaffold(s);
-
-    // after_mesh_improve
-    compute_scaffold_gradient_matrix(s, s.Dx_s, s.Dy_s);
-
-    s.Dx_s.makeCompressed();
-    s.Dy_s.makeCompressed();
-    s.Dz_s.makeCompressed();
-    s.Ri_s = MatrixXd::Zero(s.Dx_s.rows(), s.dim * s.dim);
-    s.Ji_s.resize(s.Dx_s.rows(), s.dim * s.dim);
-    s.W_s.resize(s.Dx_s.rows(), s.dim * s.dim);
-
-    return true;
-}
-
-IGL_INLINE bool mesh_improve_step(SCAFData &s)
-{
-    Eigen::MatrixXd V;
-    Eigen::MatrixXi E;
-    Eigen::MatrixXd H;
-    Eigen::MatrixXd m_uv;
-
-    if(!mesh_improve_pre(s, V, E, H, m_uv))
-        return false;
-
-    Eigen::MatrixXd uv2;
-    if(!mesh_improve_remesh(s, V, E, H, uv2))
-        return false;
-
-    if(!mesh_improve_post(uv2, m_uv, s))
-        return false;
-
-    return true;
-}
-
-IGL_INLINE bool mesh_improve_pre(
-    igl::SCAFData &s,
-    Eigen::MatrixXd &V,
-    Eigen::MatrixXi &E,
-    Eigen::MatrixXd &H,
-    Eigen::MatrixXd &m_uv
-    )
-{
-    using namespace Eigen;
-    // MatrixXd m_uv = s.w_uv.topRows(s.mv_num);
-    m_uv.resize(s.mv_num, s.w_uv.cols());
-    m_uv = s.w_uv.topRows(s.mv_num);
-    MatrixXd V_bnd;
-    V_bnd.resize(s.internal_bnd.size(), 2);
-    for (int i = 0; i < s.internal_bnd.size(); i++) // redoing step 1.
-    {
-        V_bnd.row(i) = m_uv.row(s.internal_bnd(i));
-    }
-
-    if (s.rect_frame_V.size() == 0)
-    {
-        Matrix2d ob; // = rect_corners;
-        {
-            VectorXd uv_max = m_uv.colwise().maxCoeff();
-            VectorXd uv_min = m_uv.colwise().minCoeff();
-            VectorXd uv_mid = (uv_max + uv_min) / 2.;
-
-            Eigen::Array2d scaf_range(3, 3);
-            ob.row(0) = uv_mid.array() + scaf_range * ((uv_min - uv_mid).array());
-            ob.row(1) = uv_mid.array() + scaf_range * ((uv_max - uv_mid).array());
-        }
-        Vector2d rect_len;
-        rect_len << ob(1, 0) - ob(0, 0), ob(1, 1) - ob(0, 1);
-        int frame_points = 5;
-
-        s.rect_frame_V.resize(4 * frame_points, 2);
-        for (int i = 0; i < frame_points; i++)
-        {
-            // 0,0;0,1
-            s.rect_frame_V.row(i) << ob(0, 0), ob(0, 1) + i * rect_len(1) / frame_points;
-            // 0,0;1,1
-            s.rect_frame_V.row(i + frame_points)
-                << ob(0, 0) + i * rect_len(0) / frame_points,
-                ob(1, 1);
-            // 1,0;1,1
-            s.rect_frame_V.row(i + 2 * frame_points) << ob(1, 0), ob(1, 1) - i * rect_len(1) / frame_points;
-            // 1,0;0,1
-            s.rect_frame_V.row(i + 3 * frame_points)
-                << ob(1, 0) - i * rect_len(0) / frame_points,
-                ob(0, 1);
-            // 0,0;0,1
-        }
-        s.frame_ids = Eigen::VectorXi::LinSpaced(s.rect_frame_V.rows(), s.mv_num, s.mv_num + s.rect_frame_V.rows());
-    }
-
-    // Concatenate Vert and Edge
-    // MatrixXd V;
-    // MatrixXi E;
-    igl::cat(1, V_bnd, s.rect_frame_V, V);
-    E.resize(V.rows(), 2);
-    for (int i = 0; i < E.rows(); i++)
-        E.row(i) << i, i + 1;
-    int acc_bs = 0;
-    for (auto bs : s.bnd_sizes)
-    {
-        E(acc_bs + bs - 1, 1) = acc_bs;
-        acc_bs += bs;
-    }
-    E(V.rows() - 1, 1) = acc_bs;
-    assert(acc_bs == s.internal_bnd.size());
-
-    // MatrixXd H = MatrixXd::Zero(s.component_sizes.size(), 2);
-    H.resize(s.component_sizes.size(), 2);
-    H.setZero();
-    {
-        int hole_f = 0;
-        int hole_i = 0;
-        for (auto cs : s.component_sizes)
-        {
-            for (int i = 0; i < 3; i++)
-                H.row(hole_i) += m_uv.row(s.m_T(hole_f, i)); // redoing step 2
-            hole_f += cs;
-            hole_i++;
-        }
-    }
-    H /= 3.;
-
-    // check for numerical errors
-    if (!V.allFinite())
-    {
-        s.e = SCAFError::NUMERICAL;
-        return false;
-    }
-
-    return true;
-}
-
-IGL_INLINE bool mesh_improve_remesh(
-    igl::SCAFData &s,
-    Eigen::MatrixXd &V,
-    Eigen::MatrixXi &E,
-    Eigen::MatrixXd &H,
-    Eigen::MatrixXd &uv2
-)
-{
-    using namespace Eigen;
-
-#ifdef LIBIGL_WITH_MMG
-    if(s.r == SCAFRemesher::MMG)
-    {
-        for (size_t i = 0; i < s.o.mmg2d_iter; i++)
-        {
-            if(!igl::mmg::mmg2d::triangulate(V, E, H, uv2, s.s_T, s.o))
-            {
-                s.e = SCAFError::CDT2D;
-                return false;
-            }
-        }
-    }
-#endif
-
-#ifdef LIBIGL_WITH_TRIANGLE
-    if(s.r == SCAFRemesher::TRIANGLE)
-    {
-        igl::triangle::triangulate(V, E, H, std::basic_string<char>("qYYQ"), uv2, s.s_T);
-    }
-#endif
-
-    return true;
-}
-
-IGL_INLINE bool mesh_improve_post(
-    Eigen::MatrixXd &m_uv,
-    Eigen::MatrixXd &uv2,
-    igl::SCAFData &s
-)
-{
-    using namespace Eigen;
-
-    auto bnd_n = s.internal_bnd.size();
-
-    for (auto i = 0; i < s.s_T.rows(); i++)
-        for (auto j = 0; j < s.s_T.cols(); j++)
-        {
-            auto &x = s.s_T(i, j);
-            if (x < bnd_n)
-                x = s.internal_bnd(x);
-            else
-                x += m_uv.rows() - bnd_n;
-        }
-
-    igl::cat(1, s.m_T, s.s_T, s.w_T);
-    s.w_uv.conservativeResize(m_uv.rows() - bnd_n + uv2.rows(), 2);
-    s.w_uv.bottomRows(uv2.rows() - bnd_n) = uv2.bottomRows(-bnd_n + uv2.rows());
-
-    update_scaffold(s);
-
-    // after_mesh_improve
-    compute_scaffold_gradient_matrix(s, s.Dx_s, s.Dy_s);
-
-    s.Dx_s.makeCompressed();
-    s.Dy_s.makeCompressed();
-    s.Dz_s.makeCompressed();
-    s.Ri_s = MatrixXd::Zero(s.Dx_s.rows(), s.dim * s.dim);
-    s.Ji_s.resize(s.Dx_s.rows(), s.dim * s.dim);
-    s.W_s.resize(s.Dx_s.rows(), s.dim * s.dim);
-
-    return true;
-}
-
 bool add_new_patch(igl::SCAFData &s, const Eigen::MatrixXd &V_ref,
                     const Eigen::MatrixXi &F_ref,
                     const Eigen::RowVectorXd &center,
@@ -846,6 +518,334 @@ double perform_iteration(SCAFData &s)
 }
 }
 
+bool igl::mesh_improve(igl::SCAFData &s)
+{
+    using namespace Eigen;
+    MatrixXd m_uv = s.w_uv.topRows(s.mv_num);
+    MatrixXd V_bnd;
+    V_bnd.resize(s.internal_bnd.size(), 2);
+    for (int i = 0; i < s.internal_bnd.size(); i++) // redoing step 1.
+    {
+        V_bnd.row(i) = m_uv.row(s.internal_bnd(i));
+    }
+
+    if (s.rect_frame_V.size() == 0)
+    {
+        Matrix2d ob; // = rect_corners;
+        {
+            VectorXd uv_max = m_uv.colwise().maxCoeff();
+            VectorXd uv_min = m_uv.colwise().minCoeff();
+            VectorXd uv_mid = (uv_max + uv_min) / 2.;
+
+            Eigen::Array2d scaf_range(3, 3);
+            ob.row(0) = uv_mid.array() + scaf_range * ((uv_min - uv_mid).array());
+            ob.row(1) = uv_mid.array() + scaf_range * ((uv_max - uv_mid).array());
+        }
+        Vector2d rect_len;
+        rect_len << ob(1, 0) - ob(0, 0), ob(1, 1) - ob(0, 1);
+        int frame_points = 5;
+
+        s.rect_frame_V.resize(4 * frame_points, 2);
+        for (int i = 0; i < frame_points; i++)
+        {
+            // 0,0;0,1
+            s.rect_frame_V.row(i) << ob(0, 0), ob(0, 1) + i * rect_len(1) / frame_points;
+            // 0,0;1,1
+            s.rect_frame_V.row(i + frame_points)
+                << ob(0, 0) + i * rect_len(0) / frame_points,
+                ob(1, 1);
+            // 1,0;1,1
+            s.rect_frame_V.row(i + 2 * frame_points) << ob(1, 0), ob(1, 1) - i * rect_len(1) / frame_points;
+            // 1,0;0,1
+            s.rect_frame_V.row(i + 3 * frame_points)
+                << ob(1, 0) - i * rect_len(0) / frame_points,
+                ob(0, 1);
+            // 0,0;0,1
+        }
+        s.frame_ids = Eigen::VectorXi::LinSpaced(s.rect_frame_V.rows(), s.mv_num, s.mv_num + s.rect_frame_V.rows());
+    }
+
+    // Concatenate Vert and Edge
+    MatrixXd V;
+    MatrixXi E;
+    igl::cat(1, V_bnd, s.rect_frame_V, V);
+    E.resize(V.rows(), 2);
+    for (int i = 0; i < E.rows(); i++)
+        E.row(i) << i, i + 1;
+    int acc_bs = 0;
+    for (auto bs : s.bnd_sizes)
+    {
+        E(acc_bs + bs - 1, 1) = acc_bs;
+        acc_bs += bs;
+    }
+    E(V.rows() - 1, 1) = acc_bs;
+    assert(acc_bs == s.internal_bnd.size());
+
+    MatrixXd H = MatrixXd::Zero(s.component_sizes.size(), 2);
+    {
+        int hole_f = 0;
+        int hole_i = 0;
+        for (auto cs : s.component_sizes)
+        {
+            for (int i = 0; i < 3; i++)
+                H.row(hole_i) += m_uv.row(s.m_T(hole_f, i)); // redoing step 2
+            hole_f += cs;
+            hole_i++;
+        }
+    }
+    H /= 3.;
+
+    MatrixXd uv2;
+
+    // check for numerical errors
+    if (!V.allFinite())
+    {
+        s.e = SCAFError::NUMERICAL;
+        return false;
+    }
+
+#ifdef LIBIGL_WITH_MMG
+    if(s.r == SCAFRemesher::MMG)
+    {
+        for (size_t i = 0; i < s.o.mmg2d_iter; i++)
+        {
+            if(!igl::mmg::mmg2d::triangulate(V, E, H, uv2, s.s_T, s.o))
+            {
+                s.e = SCAFError::CDT2D;
+                return false;
+            }
+        }
+    }
+#endif
+
+#ifdef LIBIGL_WITH_TRIANGLE
+    if(s.r == SCAFRemesher::TRIANGLE)
+    {
+        igl::triangle::triangulate(V, E, H, std::basic_string<char>("qYYQ"), uv2, s.s_T);
+    }
+#endif
+
+    auto bnd_n = s.internal_bnd.size();
+
+    for (auto i = 0; i < s.s_T.rows(); i++)
+        for (auto j = 0; j < s.s_T.cols(); j++)
+        {
+            auto &x = s.s_T(i, j);
+            if (x < bnd_n)
+                x = s.internal_bnd(x);
+            else
+                x += m_uv.rows() - bnd_n;
+        }
+
+    igl::cat(1, s.m_T, s.s_T, s.w_T);
+    s.w_uv.conservativeResize(m_uv.rows() - bnd_n + uv2.rows(), 2);
+    s.w_uv.bottomRows(uv2.rows() - bnd_n) = uv2.bottomRows(-bnd_n + uv2.rows());
+
+    scaf::update_scaffold(s);
+
+    // after_mesh_improve
+    scaf::compute_scaffold_gradient_matrix(s, s.Dx_s, s.Dy_s);
+
+    s.Dx_s.makeCompressed();
+    s.Dy_s.makeCompressed();
+    s.Dz_s.makeCompressed();
+    s.Ri_s = MatrixXd::Zero(s.Dx_s.rows(), s.dim * s.dim);
+    s.Ji_s.resize(s.Dx_s.rows(), s.dim * s.dim);
+    s.W_s.resize(s.Dx_s.rows(), s.dim * s.dim);
+
+    return true;
+}
+
+IGL_INLINE bool igl::mesh_improve_step(SCAFData &s)
+{
+    Eigen::MatrixXd V;
+    Eigen::MatrixXi E;
+    Eigen::MatrixXd H;
+    Eigen::MatrixXd m_uv;
+
+    if(!mesh_improve_pre(s, V, E, H, m_uv))
+        return false;
+
+    Eigen::MatrixXd uv2;
+    if(!mesh_improve_remesh(s, V, E, H, uv2))
+        return false;
+
+    if(!mesh_improve_post(uv2, m_uv, s))
+        return false;
+
+    return true;
+}
+
+IGL_INLINE bool igl::mesh_improve_pre(
+    igl::SCAFData &s,
+    Eigen::MatrixXd &V,
+    Eigen::MatrixXi &E,
+    Eigen::MatrixXd &H,
+    Eigen::MatrixXd &m_uv
+    )
+{
+    using namespace Eigen;
+    // MatrixXd m_uv = s.w_uv.topRows(s.mv_num);
+    m_uv.resize(s.mv_num, s.w_uv.cols());
+    m_uv = s.w_uv.topRows(s.mv_num);
+    MatrixXd V_bnd;
+    V_bnd.resize(s.internal_bnd.size(), 2);
+    for (int i = 0; i < s.internal_bnd.size(); i++) // redoing step 1.
+    {
+        V_bnd.row(i) = m_uv.row(s.internal_bnd(i));
+    }
+
+    if (s.rect_frame_V.size() == 0)
+    {
+        Matrix2d ob; // = rect_corners;
+        {
+            VectorXd uv_max = m_uv.colwise().maxCoeff();
+            VectorXd uv_min = m_uv.colwise().minCoeff();
+            VectorXd uv_mid = (uv_max + uv_min) / 2.;
+
+            Eigen::Array2d scaf_range(3, 3);
+            ob.row(0) = uv_mid.array() + scaf_range * ((uv_min - uv_mid).array());
+            ob.row(1) = uv_mid.array() + scaf_range * ((uv_max - uv_mid).array());
+        }
+        Vector2d rect_len;
+        rect_len << ob(1, 0) - ob(0, 0), ob(1, 1) - ob(0, 1);
+        int frame_points = 5;
+
+        s.rect_frame_V.resize(4 * frame_points, 2);
+        for (int i = 0; i < frame_points; i++)
+        {
+            // 0,0;0,1
+            s.rect_frame_V.row(i) << ob(0, 0), ob(0, 1) + i * rect_len(1) / frame_points;
+            // 0,0;1,1
+            s.rect_frame_V.row(i + frame_points)
+                << ob(0, 0) + i * rect_len(0) / frame_points,
+                ob(1, 1);
+            // 1,0;1,1
+            s.rect_frame_V.row(i + 2 * frame_points) << ob(1, 0), ob(1, 1) - i * rect_len(1) / frame_points;
+            // 1,0;0,1
+            s.rect_frame_V.row(i + 3 * frame_points)
+                << ob(1, 0) - i * rect_len(0) / frame_points,
+                ob(0, 1);
+            // 0,0;0,1
+        }
+        s.frame_ids = Eigen::VectorXi::LinSpaced(s.rect_frame_V.rows(), s.mv_num, s.mv_num + s.rect_frame_V.rows());
+    }
+
+    // Concatenate Vert and Edge
+    // MatrixXd V;
+    // MatrixXi E;
+    igl::cat(1, V_bnd, s.rect_frame_V, V);
+    E.resize(V.rows(), 2);
+    for (int i = 0; i < E.rows(); i++)
+        E.row(i) << i, i + 1;
+    int acc_bs = 0;
+    for (auto bs : s.bnd_sizes)
+    {
+        E(acc_bs + bs - 1, 1) = acc_bs;
+        acc_bs += bs;
+    }
+    E(V.rows() - 1, 1) = acc_bs;
+    assert(acc_bs == s.internal_bnd.size());
+
+    // MatrixXd H = MatrixXd::Zero(s.component_sizes.size(), 2);
+    H.resize(s.component_sizes.size(), 2);
+    H.setZero();
+    {
+        int hole_f = 0;
+        int hole_i = 0;
+        for (auto cs : s.component_sizes)
+        {
+            for (int i = 0; i < 3; i++)
+                H.row(hole_i) += m_uv.row(s.m_T(hole_f, i)); // redoing step 2
+            hole_f += cs;
+            hole_i++;
+        }
+    }
+    H /= 3.;
+
+    // check for numerical errors
+    if (!V.allFinite())
+    {
+        s.e = SCAFError::NUMERICAL;
+        return false;
+    }
+
+    return true;
+}
+
+IGL_INLINE bool igl::mesh_improve_remesh(
+    igl::SCAFData &s,
+    Eigen::MatrixXd &V,
+    Eigen::MatrixXi &E,
+    Eigen::MatrixXd &H,
+    Eigen::MatrixXd &uv2
+)
+{
+    using namespace Eigen;
+
+#ifdef LIBIGL_WITH_MMG
+    if(s.r == SCAFRemesher::MMG)
+    {
+        for (size_t i = 0; i < s.o.mmg2d_iter; i++)
+        {
+            if(!igl::mmg::mmg2d::triangulate(V, E, H, uv2, s.s_T, s.o))
+            {
+                s.e = SCAFError::CDT2D;
+                return false;
+            }
+        }
+    }
+#endif
+
+#ifdef LIBIGL_WITH_TRIANGLE
+    if(s.r == SCAFRemesher::TRIANGLE)
+    {
+        igl::triangle::triangulate(V, E, H, std::basic_string<char>("qYYQ"), uv2, s.s_T);
+    }
+#endif
+
+    return true;
+}
+
+IGL_INLINE bool igl::mesh_improve_post(
+    Eigen::MatrixXd &m_uv,
+    Eigen::MatrixXd &uv2,
+    igl::SCAFData &s
+)
+{
+    using namespace Eigen;
+
+    auto bnd_n = s.internal_bnd.size();
+
+    for (auto i = 0; i < s.s_T.rows(); i++)
+        for (auto j = 0; j < s.s_T.cols(); j++)
+        {
+            auto &x = s.s_T(i, j);
+            if (x < bnd_n)
+                x = s.internal_bnd(x);
+            else
+                x += m_uv.rows() - bnd_n;
+        }
+
+    igl::cat(1, s.m_T, s.s_T, s.w_T);
+    s.w_uv.conservativeResize(m_uv.rows() - bnd_n + uv2.rows(), 2);
+    s.w_uv.bottomRows(uv2.rows() - bnd_n) = uv2.bottomRows(-bnd_n + uv2.rows());
+
+    scaf::update_scaffold(s);
+
+    // after_mesh_improve
+    scaf::compute_scaffold_gradient_matrix(s, s.Dx_s, s.Dy_s);
+
+    s.Dx_s.makeCompressed();
+    s.Dy_s.makeCompressed();
+    s.Dz_s.makeCompressed();
+    s.Ri_s = MatrixXd::Zero(s.Dx_s.rows(), s.dim * s.dim);
+    s.Ji_s.resize(s.Dx_s.rows(), s.dim * s.dim);
+    s.W_s.resize(s.Dx_s.rows(), s.dim * s.dim);
+
+    return true;
+}
+
 IGL_INLINE bool igl::scaf_precompute(
     const Eigen::MatrixXd &V,
     const Eigen::MatrixXi &F,
@@ -863,7 +863,7 @@ IGL_INLINE bool igl::scaf_precompute(
         return false;
 
     // NOTE: moved here from add_new_patch
-    if (!igl::scaf::mesh_improve(s))
+    if (!igl::mesh_improve(s))
         return false;
 
     s.soft_const_p = soft_p;
@@ -1023,7 +1023,7 @@ IGL_INLINE bool igl::scaf_solve(SCAFData &s, int iter_num)
         s.total_energy = igl::scaf::compute_energy(s, s.w_uv, true) / s.mesh_measure;
         s.rect_frame_V = Eigen::MatrixXd();
 
-        if(!igl::scaf::mesh_improve(s))
+        if(!igl::mesh_improve(s))
             return false;
 
         double new_weight = s.mesh_measure * s.energy / (s.sf_num * 100);
@@ -1037,6 +1037,26 @@ IGL_INLINE bool igl::scaf_solve(SCAFData &s, int iter_num)
     }
 
     // return s.w_uv.topRows(s.mv_num);
+    return true;
+}
+
+IGL_INLINE bool igl::scaf_solve_step(SCAFData &s, int iter_num)
+{
+    if(!igl::scaf_solve_init(s))
+        return false;
+
+    for (int it = 0; it < iter_num; it++)
+    {
+        if(!igl::scaf_solve_pre(s))
+            return false;
+
+        if(!igl::mesh_improve_step(s))
+            return false;
+
+        if(!igl::scaf_solve_post(s))
+            return false;
+    }
+
     return true;
 }
 
@@ -1069,26 +1089,5 @@ IGL_INLINE bool igl::scaf_solve_post(SCAFData &s)
     return true;
 }
 
-IGL_INLINE bool igl::scaf_solve_step(SCAFData &s, int iter_num)
-{
-    if(!igl::scaf_solve_init(s))
-        return false;
-
-    for (int it = 0; it < iter_num; it++)
-    {
-        if(!igl::scaf_solve_pre(s))
-            return false;
-
-        if(!igl::mesh_improve_step(s))
-            return false;
-
-        if(!igl::scaf_solve_post(s))
-            return false;
-    }
-
-    return true;
-}
-
 #ifdef IGL_STATIC_LIBRARY
 #endif
-
