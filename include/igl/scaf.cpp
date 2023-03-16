@@ -488,30 +488,11 @@ bool add_new_patch(igl::SCAFData &s, const Eigen::MatrixXd &V_ref,
 
     s.rect_frame_V = MatrixXd();
 
-    if (!mesh_improve(s))
-        return false;
+    // if (!mesh_improve(s))
+    //     return false;
 
     return true;
 }
-
-    if(!scaf_remesh_step(s))
-        return true;
-
-    if (!mesh_improve_pre(s))
-        return false;
-
-    if (!mesh_improve_post(s))
-        return false;
-
-
-// bool add_new_patch_improve(igl::SCAFData &s)
-// {
-//     // just improve :-)
-//     if (!mesh_improve(s))
-//         return false;
-
-//     return true;
-// }
 
 void compute_jacobians(SCAFData &s, const Eigen::MatrixXd &V_new, bool whole)
 {
@@ -844,7 +825,7 @@ IGL_INLINE bool igl::scaf_precompute(
     const Eigen::MatrixXd &V,
     const Eigen::MatrixXi &F,
     const Eigen::MatrixXd &V_init,
-    igl::SCAFData &data,
+    igl::SCAFData &s,
     igl::MappingEnergyType slim_energy,
     Eigen::VectorXi &b,
     Eigen::MatrixXd &bc,
@@ -853,17 +834,21 @@ IGL_INLINE bool igl::scaf_precompute(
     Eigen::MatrixXd CN;
     Eigen::MatrixXi FN;
     
-    if(!igl::scaf::add_new_patch(data, V, F, Eigen::RowVector2d(0, 0), V_init))
+    if(!igl::scaf::add_new_patch(s, V, F, Eigen::RowVector2d(0, 0), V_init))
         return false;
 
-    data.soft_const_p = soft_p;
+    // NOTE: moved here from add_new_patch, following scaf_solve logic
+    if (!mesh_improve(s))
+        return false;
+
+    s.soft_const_p = soft_p;
     for (int i = 0; i < b.rows(); i++)
-        data.soft_cons[b(i)] = bc.row(i);
-    data.slim_energy = slim_energy;
+        s.soft_cons[b(i)] = bc.row(i);
+    s.slim_energy = slim_energy;
 
-    auto &s = data;
+    // auto &s = data;
 
-    if (!data.has_pre_calc)
+    if (!s.has_pre_calc)
     {
         int v_n = s.mv_num + s.sv_num;
         int f_n = s.mf_num + s.sf_num;
@@ -903,7 +888,100 @@ IGL_INLINE bool igl::scaf_precompute(
         s.Ji_s.resize(s.Dx_s.rows(), dim * dim);
         s.W_s.resize(s.Dx_s.rows(), dim * dim);
 
-        data.has_pre_calc = true;
+        s.has_pre_calc = true;
+    }
+
+    return true;
+}
+
+IGL_INLINE bool igl::scaf_precompute_step(
+    const Eigen::MatrixXd &V,
+    const Eigen::MatrixXi &F,
+    const Eigen::MatrixXd &V_init,
+    igl::SCAFData &s,
+    igl::MappingEnergyType slim_energy,
+    Eigen::VectorXi &b,
+    Eigen::MatrixXd &bc,
+    double soft_p)
+{
+    if(!scaf_precompute_pre(V, F, V_init, s))
+        return false;
+
+    if(!scaf_remesh_step(s))
+        return false;
+
+    if(!scaf_precompute_post(s, slim_energy, b, bc, soft_p))
+        return false;
+    
+    return true;
+}
+
+IGL_INLINE bool igl::scaf_precompute_pre(
+    const Eigen::MatrixXd &V,
+    const Eigen::MatrixXi &F,
+    const Eigen::MatrixXd &V_init,
+    igl::SCAFData &s)
+{    
+    if(!igl::scaf::add_new_patch(s, V, F, Eigen::RowVector2d(0, 0), V_init))
+        return false;
+
+    return true;
+}
+
+IGL_INLINE bool igl::scaf_precompute_post(
+    igl::SCAFData &s,
+    igl::MappingEnergyType slim_energy,
+    Eigen::VectorXi &b,
+    Eigen::MatrixXd &bc,
+    double soft_p)
+{
+
+    s.soft_const_p = soft_p;
+    for (int i = 0; i < b.rows(); i++)
+        s.soft_cons[b(i)] = bc.row(i);
+    s.slim_energy = slim_energy;
+
+    if (!s.has_pre_calc)
+    {
+        int v_n = s.mv_num + s.sv_num;
+        int f_n = s.mf_num + s.sf_num;
+        int dim = s.dim;
+        Eigen::MatrixXd F1, F2, F3;
+        igl::local_basis(s.m_V, s.m_T, F1, F2, F3);
+        auto face_proj = [](Eigen::MatrixXd &F)
+        {
+            std::vector<Eigen::Triplet<double>> IJV;
+            int f_num = F.rows();
+            for (int i = 0; i < F.rows(); i++)
+            {
+                IJV.push_back(Eigen::Triplet<double>(i, i, F(i, 0)));
+                IJV.push_back(Eigen::Triplet<double>(i, i + f_num, F(i, 1)));
+                IJV.push_back(Eigen::Triplet<double>(i, i + 2 * f_num, F(i, 2)));
+            }
+            Eigen::SparseMatrix<double> P(f_num, 3 * f_num);
+            P.setFromTriplets(IJV.begin(), IJV.end());
+            return P;
+        };
+        Eigen::SparseMatrix<double> G;
+        igl::grad(s.m_V, s.m_T, G);
+        s.Dx_m = face_proj(F1) * G;
+        s.Dy_m = face_proj(F2) * G;
+
+        igl::scaf::compute_scaffold_gradient_matrix(s, s.Dx_s, s.Dy_s);
+
+        s.Dx_m.makeCompressed();
+        s.Dy_m.makeCompressed();
+        s.Ri_m = Eigen::MatrixXd::Zero(s.Dx_m.rows(), dim * dim);
+        s.Ji_m.resize(s.Dx_m.rows(), dim * dim);
+        s.W_m.resize(s.Dx_m.rows(), dim * dim);
+
+        s.Dx_s.makeCompressed();
+        s.Dy_s.makeCompressed();
+        s.Ri_s = Eigen::MatrixXd::Zero(s.Dx_s.rows(), dim * dim);
+        s.Ji_s.resize(s.Dx_s.rows(), dim * dim);
+        s.W_s.resize(s.Dx_s.rows(), dim * dim);
+
+        s.has_pre_calc = true;
     }
 
     return true;
@@ -988,18 +1066,18 @@ IGL_INLINE bool igl::scaf_solve_post(SCAFData &s)
 IGL_INLINE bool igl::scaf_solve_step(SCAFData &s, int iter_num)
 {
     if(!scaf_solve_init())
-        return true;
+        return false;
 
     for (int it = 0; it < iter_num; it++)
     {
         if(!scaf_solve_pre(s))
-            return true;
+            return false;
 
         if(!scaf_remesh_step(s))
-            return true;
+            return false;
 
         if(!scaf_solve_post(s))
-            return true;
+            return false;
     }
 
     return true;
