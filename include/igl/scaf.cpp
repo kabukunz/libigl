@@ -278,7 +278,26 @@ bool mesh_improve(igl::SCAFData &s)
     return true;
 }
 
-bool mesh_improve_pre(
+IGL_INLINE bool igl::mesh_improve_step(SCAFData &s)
+{
+    MatrixXd V;
+    MatrixXi E;
+    MatrixXd H;
+
+    if(!mesh_improve_pre(s, V, E, H))
+        return false;
+
+    MatrixXd uv2;
+    if(!mesh_improve_remesh(s, V, E, H, uv2))
+        return false;
+
+    if(!mesh_improve_post(uv2, s))
+        return false;
+
+    return true;
+}
+
+IGL_INLINE bool mesh_improve_pre(
     igl::SCAFData &s,
     MatrixXd &V,
     MatrixXi &E,
@@ -371,7 +390,7 @@ bool mesh_improve_pre(
     return true;
 }
 
-bool mesh_improve_remesh(
+IGL_INLINE bool mesh_improve_remesh(
     igl::SCAFData &s,
     MatrixXd &V,
     MatrixXi &E,
@@ -405,7 +424,7 @@ bool mesh_improve_remesh(
     return true;
 }
 
-bool mesh_improve_post(
+IGL_INLINE bool mesh_improve_post(
     MatrixXd &uv2,
     igl::SCAFData &s
 )
@@ -837,7 +856,7 @@ IGL_INLINE bool igl::scaf_precompute(
     if(!igl::scaf::add_new_patch(s, V, F, Eigen::RowVector2d(0, 0), V_init))
         return false;
 
-    // NOTE: moved here from add_new_patch, following scaf_solve logic
+    // NOTE: moved here from add_new_patch
     if (!mesh_improve(s))
         return false;
 
@@ -907,7 +926,7 @@ IGL_INLINE bool igl::scaf_precompute_step(
     if(!scaf_precompute_pre(V, F, V_init, s))
         return false;
 
-    if(!scaf_remesh_step(s))
+    if(!mesh_improve_step(s))
         return false;
 
     if(!scaf_precompute_post(s, slim_energy, b, bc, soft_p))
@@ -1029,25 +1048,6 @@ IGL_INLINE bool igl::scaf_solve_pre(SCAFData &s)
     return true;
 }
 
-IGL_INLINE bool igl::scaf_remesh_step(SCAFData &s)
-{
-    MatrixXd V;
-    MatrixXi E;
-    MatrixXd H;
-
-    if(!mesh_improve_pre(s, V, E, H))
-        return false;
-
-    MatrixXd uv2;
-    if(!mesh_improve_remesh(s, V, E, H, uv2))
-        return false;
-
-    if(!mesh_improve_post(uv2, s))
-        return false;
-
-    return true;
-}
-
 IGL_INLINE bool igl::scaf_solve_post(SCAFData &s)
 {
     
@@ -1073,7 +1073,7 @@ IGL_INLINE bool igl::scaf_solve_step(SCAFData &s, int iter_num)
         if(!scaf_solve_pre(s))
             return false;
 
-        if(!scaf_remesh_step(s))
+        if(!mesh_improve_step(s))
             return false;
 
         if(!scaf_solve_post(s))

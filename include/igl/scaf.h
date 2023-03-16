@@ -26,13 +26,13 @@ namespace igl
 
     enum class SCAFRemesher
     {
+        NONE,
 #ifdef LIBIGL_WITH_TRIANGLE
         TRIANGLE,
 #endif        
 #ifdef LIBIGL_WITH_MMG
         MMG,
 #endif
-        AUTO,
     };
 
     enum class SCAFError
@@ -102,9 +102,9 @@ namespace igl
 
     // Compute necessary information to start using SCAF
     // Inputs:
-    //		V           #V by 3 list of mesh vertex positions
-    //		F           #F by 3/3 list of mesh faces (triangles/tets)
-    //    data          igl::SCAFData
+    //	  V           #V by 3 list of mesh vertex positions
+    //    F           #F by 3/3 list of mesh faces (triangles/tets)
+    //    s           igl::SCAFData
     //    slim_energy Energy type to minimize
     //    b           list of boundary indices into V (soft constraint)
     //    bc          #b by dim list of boundary conditions (soft constraint)
@@ -119,10 +119,83 @@ namespace igl
         Eigen::MatrixXd &bc,
         double soft_p);
 
+    // step precompute
+    IGL_INLINE bool scaf_precompute_step(
+        const Eigen::MatrixXd &V,
+        const Eigen::MatrixXi &F,
+        const Eigen::MatrixXd &V_init,
+        igl::SCAFData &s,
+        igl::MappingEnergyType slim_energy,
+        Eigen::VectorXi &b,
+        Eigen::MatrixXd &bc,
+        double soft_p);
+
+    IGL_INLINE bool scaf_precompute_pre(
+        const Eigen::MatrixXd &V,
+        const Eigen::MatrixXi &F,
+        const Eigen::MatrixXd &V_init,
+        igl::SCAFData &s);
+
+    IGL_INLINE bool scaf_precompute_post(
+        igl::SCAFData &s,
+        igl::MappingEnergyType slim_energy,
+        Eigen::VectorXi &b,
+        Eigen::MatrixXd &bc,
+        double soft_p);
+
     // Run iter_num iterations of SCAF, with precomputed data
+    // Inputs:
+    //    s          igl::SCAFData
+    //    iter_num   iterations
     // Outputs:
     //    V_o (in SLIMData): #V by dim list of mesh vertex positions
     IGL_INLINE bool scaf_solve(SCAFData &s, int iter_num);
+
+    // step solve
+    IGL_INLINE bool scaf_solve_step(SCAFData &s, int iter_num);
+    IGL_INLINE bool scaf_solve_init(SCAFData &s);
+    IGL_INLINE bool scaf_solve_pre(SCAFData &s);
+    IGL_INLINE bool scaf_solve_post(SCAFData &s);
+
+    // Run mesh improve
+    // Inputs:
+    //    s          igl::SCAFData
+    // Outputs:
+    //    s          igl::SCAFData    
+    IGL_INLINE bool mesh_improve_step(igl::SCAFData &s);
+
+    // Inputs:
+    //      s           igl::SCAFData
+    // Outputs:
+    //		V           #V by 2 list of mesh vertex main boundary positions
+    //		E           #E by 2 list of mesh edges main boundary loop
+    //		H           #H by 2 list of hole boundaries loops
+    IGL_INLINE bool mesh_improve_pre(
+        igl::SCAFData &s,
+        MatrixXd &V,
+        MatrixXi &E,
+        MatrixXd &H);
+
+    // Inputs:
+    //      s           igl::SCAFData
+    //		V           #V by 2 list of mesh vertex main boundary positions
+    //		E           #E by 2 list of mesh edges main boundary loop
+    //		H           #H by 2 list of hole boundaries loops
+    // Outputs:
+    //      uv2         #V by dim list of improved mesh vertex positions
+    IGL_INLINE bool mesh_improve_remesh(
+        igl::SCAFData &s,
+        MatrixXd &V,
+        MatrixXi &E,
+        MatrixXd &H,
+        MatrixXd &uv2);
+
+    // Inputs:
+    //      uv2         #V by dim list of improved mesh vertex positions
+    // Outputs:
+    //      V_o (in s): #V by dim list of mesh vertex positions
+    IGL_INLINE bool mesh_improve_post(MatrixXd &uv2, igl::SCAFData &s);
+
 }
 
 #ifndef IGL_STATIC_LIBRARY
