@@ -430,8 +430,8 @@ IGL_INLINE bool mesh_improve_remesh(
 }
 
 IGL_INLINE bool mesh_improve_post(
-    Eigen::MatrixXd &uv2,
     Eigen::MatrixXd &m_uv,
+    Eigen::MatrixXd &uv2,
     igl::SCAFData &s
 )
 {

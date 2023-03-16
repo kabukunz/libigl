@@ -26,7 +26,6 @@ namespace igl
 
     enum class SCAFRemesher
     {
-        NONE,
 #ifdef LIBIGL_WITH_TRIANGLE
         TRIANGLE,
 #endif        
@@ -199,8 +198,8 @@ namespace igl
     // Outputs:
     //      V_o (in s): #V by dim list of mesh vertex positions
     IGL_INLINE bool mesh_improve_post(
-        Eigen::MatrixXd &uv2, 
         Eigen::MatrixXd &m_uv,
+        Eigen::MatrixXd &uv2, 
         igl::SCAFData &s);
 
 }
