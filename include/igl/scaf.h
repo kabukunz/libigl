@@ -157,11 +157,14 @@ namespace igl
     IGL_INLINE bool scaf_solve_pre(SCAFData &s);
     IGL_INLINE bool scaf_solve_post(SCAFData &s);
 
+
     // Run mesh improve
     // Inputs:
     //    s          igl::SCAFData
     // Outputs:
     //    s          igl::SCAFData    
+    IGL_INLINE bool mesh_improve(igl::SCAFData &s);
+
     IGL_INLINE bool mesh_improve_step(igl::SCAFData &s);
 
     // Inputs:
@@ -172,9 +175,10 @@ namespace igl
     //		H           #H by 2 list of hole boundaries loops
     IGL_INLINE bool mesh_improve_pre(
         igl::SCAFData &s,
-        MatrixXd &V,
-        MatrixXi &E,
-        MatrixXd &H);
+        Eigen::MatrixXd &V,
+        Eigen::MatrixXi &E,
+        Eigen::MatrixXd &H,
+        Eigen::MatrixXd &m_uv);
 
     // Inputs:
     //      s           igl::SCAFData
@@ -185,16 +189,19 @@ namespace igl
     //      uv2         #V by dim list of improved mesh vertex positions
     IGL_INLINE bool mesh_improve_remesh(
         igl::SCAFData &s,
-        MatrixXd &V,
-        MatrixXi &E,
-        MatrixXd &H,
-        MatrixXd &uv2);
+        Eigen::MatrixXd &V,
+        Eigen::MatrixXi &E,
+        Eigen::MatrixXd &H,
+        Eigen::MatrixXd &uv2);
 
     // Inputs:
     //      uv2         #V by dim list of improved mesh vertex positions
     // Outputs:
     //      V_o (in s): #V by dim list of mesh vertex positions
-    IGL_INLINE bool mesh_improve_post(MatrixXd &uv2, igl::SCAFData &s);
+    IGL_INLINE bool mesh_improve_post(
+        Eigen::MatrixXd &uv2, 
+        Eigen::MatrixXd &m_uv,
+        igl::SCAFData &s);
 
 }
 
