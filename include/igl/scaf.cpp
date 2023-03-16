@@ -686,7 +686,7 @@ IGL_INLINE bool igl::mesh_improve_pre(
 {
     using namespace Eigen;
     // MatrixXd m_uv = s.w_uv.topRows(s.mv_num);
-    m_uv.resize(s.mv_num, s.w_uv.cols());
+    // m_uv.resize(s.mv_num, s.w_uv.cols());
     m_uv = s.w_uv.topRows(s.mv_num);
     MatrixXd V_bnd;
     V_bnd.resize(s.internal_bnd.size(), 2);
@@ -932,7 +932,11 @@ IGL_INLINE bool igl::scaf_precompute_step(
     if(!scaf_precompute_pre(V, F, V_init, s))
         return false;
 
-    if(!mesh_improve_step(s))
+    // FIXME:
+    // if(!mesh_improve_step(s))
+    //     return false;
+
+    if(!mesh_improve(s))
         return false;
 
     if(!scaf_precompute_post(s, slim_energy, b, bc, soft_p))
@@ -1050,7 +1054,11 @@ IGL_INLINE bool igl::scaf_solve_step(SCAFData &s, int iter_num)
         if(!igl::scaf_solve_pre(s))
             return false;
 
-        if(!igl::mesh_improve_step(s))
+        // FIXME:
+        // if(!igl::mesh_improve_step(s))
+        //     return false;
+
+        if(!mesh_improve(s))
             return false;
 
         if(!igl::scaf_solve_post(s))
