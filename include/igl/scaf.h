@@ -32,6 +32,7 @@ namespace igl
 #ifdef LIBIGL_WITH_MMG
         MMG,
 #endif
+        AUTO,
     };
 
     enum class SCAFError

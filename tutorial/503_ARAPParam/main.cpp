@@ -11,8 +11,11 @@ Eigen::MatrixXd V;
 Eigen::MatrixXi F;
 Eigen::MatrixXd V_uv;
 Eigen::MatrixXd initial_guess;
+Eigen::MatrixXd face_colors;
 
 bool show_uv = false;
+bool show_texture = true;
+
 
 bool key_down(igl::opengl::glfw::Viewer& viewer, unsigned char key, int modifier)
 {
@@ -23,6 +26,8 @@ bool key_down(igl::opengl::glfw::Viewer& viewer, unsigned char key, int modifier
 
   if (key == 'q')
     V_uv = initial_guess;
+  if (key == 'D' || key == 'd')
+    show_texture = !show_texture;
 
   if (show_uv)
   {
@@ -33,12 +38,15 @@ bool key_down(igl::opengl::glfw::Viewer& viewer, unsigned char key, int modifier
   {
     viewer.data().set_mesh(V,F);
     viewer.core().align_camera_center(V,F);
-  }
+  }    
+ 
+  viewer.data().show_texture = show_texture;
 
   viewer.data().compute_normals();
 
   return false;
 }
+
 
 int main(int argc, char *argv[])
 {
@@ -65,16 +73,41 @@ int main(int argc, char *argv[])
   // 2 means that we're going to *solve* in 2d
   arap_precomputation(V,F,2,b,arap_data);
 
-
   // Solve arap using the harmonic map as initial guess
   V_uv = initial_guess;
 
   arap_solve(bc,arap_data,V_uv);
 
 
+
+  // Compute per-face distortion
+  int nfaces = F.rows();
+  face_colors.resize(nfaces, 3);
+  for(int i=0; i<nfaces; i++)
+  {
+    Eigen::Matrix<double, 2, 3> M1;
+    M1.row(0) = V.row(F(i,1)) - V.row(F(i,0));
+    M1.row(1) = V.row(F(i,2)) - V.row(F(i,0));
+    Eigen::Matrix2d M2;
+    M2.row(0) = V_uv.row(F(i,1)) - V_uv.row(F(i,0));
+    M2.row(1) = V_uv.row(F(i,2)) - V_uv.row(F(i,0));
+    Eigen::Matrix2d M = Eigen::Matrix2d::Identity();
+    M -= (M1*M1.transpose()).inverse() * M2*M2.transpose();
+    Eigen::Vector2cd evals = M.eigenvalues();
+    
+    double lmax = std::max(std::real(evals[0]), std::real(evals[1]));
+    double lmin = std::min(std::real(evals[0]), std::real(evals[1]));
+    double magic = 0.5;
+    face_colors(i,0) = 1.0 - magic*std::max(0.0, -lmin);
+    face_colors(i,1) = 1.0 - magic*std::max(lmax, -lmin);
+    face_colors(i,2) = 1.0 - magic*std::max(0.0, lmax);
+  }
+
+
+
   // Scale UV to make the texture more clear
   V_uv *= 20;
-
+  
   // Plot the mesh
   igl::opengl::glfw::Viewer viewer;
   viewer.data().set_mesh(V, F);
@@ -84,8 +117,12 @@ int main(int argc, char *argv[])
   // Disable wireframe
   viewer.data().show_lines = false;
 
-  // Draw checkerboard texture
-  viewer.data().show_texture = true;
+  // face colors
+  viewer.data().set_colors(face_colors);
+  viewer.data().set_face_based(true);
+
+//   // Draw checkerboard texture
+//   viewer.data().show_texture = true;
 
   // Launch the viewer
   viewer.launch();

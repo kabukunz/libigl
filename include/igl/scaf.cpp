@@ -140,7 +140,11 @@ void compute_scaffold_gradient_matrix(SCAFData &s,
             F2.col(2).asDiagonal() * Dz;
 }
 
-bool mesh_improve(igl::SCAFData &s)
+bool mesh_improve_pre(
+    igl::SCAFData &s,
+    MatrixXd &V,
+    MatrixXi &E,
+    MatrixXd &H)
 {
     using namespace Eigen;
     MatrixXd m_uv = s.w_uv.topRows(s.mv_num);
@@ -188,8 +192,8 @@ bool mesh_improve(igl::SCAFData &s)
     }
 
     // Concatenate Vert and Edge
-    MatrixXd V;
-    MatrixXi E;
+    // MatrixXd V;
+    // MatrixXi E;
     igl::cat(1, V_bnd, s.rect_frame_V, V);
     E.resize(V.rows(), 2);
     for (int i = 0; i < E.rows(); i++)
@@ -203,7 +207,9 @@ bool mesh_improve(igl::SCAFData &s)
     E(V.rows() - 1, 1) = acc_bs;
     assert(acc_bs == s.internal_bnd.size());
 
-    MatrixXd H = MatrixXd::Zero(s.component_sizes.size(), 2);
+    // MatrixXd H = MatrixXd::Zero(s.component_sizes.size(), 2);
+    H.resize(s.component_sizes.size(), 2);
+    H.setZero();
     {
         int hole_f = 0;
         int hole_i = 0;
@@ -217,14 +223,25 @@ bool mesh_improve(igl::SCAFData &s)
     }
     H /= 3.;
 
-    MatrixXd uv2;
-
     // check for numerical errors
     if (!V.allFinite())
     {
         s.e = SCAFError::NUMERICAL;
         return false;
     }
+
+    return true;
+}
+
+bool mesh_improve_remesh(
+    igl::SCAFData &s,
+    MatrixXd &V,
+    MatrixXi &E,
+    MatrixXd &H,
+    MatrixXd &uv2
+)
+{
+    using namespace Eigen;
 
 #ifdef LIBIGL_WITH_MMG
     if(s.r == SCAFRemesher::MMG)
@@ -246,6 +263,16 @@ bool mesh_improve(igl::SCAFData &s)
         igl::triangle::triangulate(V, E, H, std::basic_string<char>("qYYQ"), uv2, s.s_T);
     }
 #endif
+
+    return true;
+}
+
+bool mesh_improve_post(
+    MatrixXd &uv2,
+    igl::SCAFData &s
+)
+{
+    using namespace Eigen;
 
     auto bnd_n = s.internal_bnd.size();
 
@@ -323,11 +350,23 @@ bool add_new_patch(igl::SCAFData &s, const Eigen::MatrixXd &V_ref,
 
     s.rect_frame_V = MatrixXd();
 
-    if (!mesh_improve(s))
+    if (!mesh_improve_pre(s))
+        return false;
+
+    if (!mesh_improve_post(s))
         return false;
 
     return true;
 }
+
+// bool add_new_patch_improve(igl::SCAFData &s)
+// {
+//     // just improve :-)
+//     if (!mesh_improve(s))
+//         return false;
+
+//     return true;
+// }
 
 void compute_jacobians(SCAFData &s, const Eigen::MatrixXd &V_new, bool whole)
 {
@@ -735,6 +774,7 @@ IGL_INLINE bool igl::scaf_solve(SCAFData &s, int iter_num)
     {
         s.total_energy = igl::scaf::compute_energy(s, s.w_uv, true) / s.mesh_measure;
         s.rect_frame_V = Eigen::MatrixXd();
+        
         if(!igl::scaf::mesh_improve(s))
             return false;
 

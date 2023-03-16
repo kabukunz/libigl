@@ -24,10 +24,12 @@ struct MMGOptions
 {        
     std::optional<int> mmg2d_verbose = -1;
     std::optional<int> mmg2d_noInsert = 1;
-    std::optional<double> mmg2d_angleDetection = {}; 
+    std::optional<double> mmg2d_hausd = {};
+    std::optional<double> igl_mmg2d_hmin = {};
+    std::optional<double> igl_mmg2d_hmax = {};
     std::optional<double> mmg2d_hgrad = 1.0;
     std::optional<double> mmg2d_hsiz = {};
-    std::optional<double> mmg2d_hausd = {};
+    std::optional<double> mmg2d_angleDetection = {}; 
     std::optional<int> mmg2d_nreg = {};
     std::optional<int> mmg2d_xreg = {};
     std::optional<int> mmg2d_iter = 1;
