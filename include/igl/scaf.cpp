@@ -658,36 +658,23 @@ bool igl::mesh_improve(igl::SCAFData &s)
 
 IGL_INLINE bool igl::mesh_improve_step(SCAFData &s)
 {
-    Eigen::MatrixXd V;
-    Eigen::MatrixXi E;
-    Eigen::MatrixXd H;
-    Eigen::MatrixXd m_uv;
-
-    if(!mesh_improve_pre(s, V, E, H, m_uv))
+    if(!mesh_improve_pre(s))
         return false;
 
-    Eigen::MatrixXd uv2;
-    if(!mesh_improve_remesh(s, V, E, H, uv2))
+    if(!mesh_improve_remesh(s))
         return false;
 
-    if(!mesh_improve_post(uv2, m_uv, s))
+    if(!mesh_improve_post(s))
         return false;
 
     return true;
 }
 
-IGL_INLINE bool igl::mesh_improve_pre(
-    igl::SCAFData &s,
-    Eigen::MatrixXd &V,
-    Eigen::MatrixXi &E,
-    Eigen::MatrixXd &H,
-    Eigen::MatrixXd &m_uv
-    )
+IGL_INLINE bool igl::mesh_improve_pre(igl::SCAFData &s)
 {
     using namespace Eigen;
     
-    // MatrixXd m_uv = s.w_uv.topRows(s.mv_num);
-    m_uv = s.w_uv.topRows(s.mv_num);
+    MatrixXd m_uv = s.w_uv.topRows(s.mv_num);
     MatrixXd V_bnd;
     V_bnd.resize(s.internal_bnd.size(), 2);
     for (int i = 0; i < s.internal_bnd.size(); i++) // redoing step 1.
@@ -732,8 +719,8 @@ IGL_INLINE bool igl::mesh_improve_pre(
     }
 
     // Concatenate Vert and Edge
-    // MatrixXd V;
-    // MatrixXi E;
+    MatrixXd V;
+    MatrixXi E;
     igl::cat(1, V_bnd, s.rect_frame_V, V);
     E.resize(V.rows(), 2);
     for (int i = 0; i < E.rows(); i++)
@@ -747,7 +734,7 @@ IGL_INLINE bool igl::mesh_improve_pre(
     E(V.rows() - 1, 1) = acc_bs;
     assert(acc_bs == s.internal_bnd.size());
 
-    // MatrixXd H = MatrixXd::Zero(s.component_sizes.size(), 2);
+    MatrixXd H = MatrixXd::Zero(s.component_sizes.size(), 2);
     H.resize(s.component_sizes.size(), 2);
     H.setZero();
     {
@@ -770,18 +757,24 @@ IGL_INLINE bool igl::mesh_improve_pre(
         return false;
     }
 
+    s.rd = {};
+    s.rd.V = V;
+    s.rd.E = E;
+    s.rd.H = H;
+    s.rd.m_uv = m_uv;
+
     return true;
 }
 
-IGL_INLINE bool igl::mesh_improve_remesh(
-    igl::SCAFData &s,
-    Eigen::MatrixXd &V,
-    Eigen::MatrixXi &E,
-    Eigen::MatrixXd &H,
-    Eigen::MatrixXd &uv2
-)
+IGL_INLINE bool igl::mesh_improve_remesh(igl::SCAFData &s)
 {
     using namespace Eigen;
+
+    auto &V = s.rd.V;
+    auto &E = s.rd.E;
+    auto &H = s.rd.H;
+
+    Eigen::MatrixXd uv2;
 
 #ifdef LIBIGL_WITH_MMG
     if(s.r == SCAFRemesher::MMG)
@@ -804,16 +797,17 @@ IGL_INLINE bool igl::mesh_improve_remesh(
     }
 #endif
 
+    s.rd.uv2 = uv2;
+
     return true;
 }
 
-IGL_INLINE bool igl::mesh_improve_post(
-    Eigen::MatrixXd &m_uv,
-    Eigen::MatrixXd &uv2,
-    igl::SCAFData &s
-)
+IGL_INLINE bool igl::mesh_improve_post(igl::SCAFData &s)
 {
     using namespace Eigen;
+
+    auto &m_uv = s.rd.m_uv;
+    auto &uv2 = s.rd.uv2;
 
     auto bnd_n = s.internal_bnd.size();
 
@@ -932,11 +926,7 @@ IGL_INLINE bool igl::scaf_precompute_step(
     if(!scaf_precompute_pre(V, F, V_init, s))
         return false;
 
-    // FIXME:
-    // if(!mesh_improve_step(s))
-    //     return false;
-
-    if(!mesh_improve(s))
+    if(!mesh_improve_step(s))
         return false;
 
     if(!scaf_precompute_post(s, slim_energy, b, bc, soft_p))
@@ -1040,7 +1030,6 @@ IGL_INLINE bool igl::scaf_solve(SCAFData &s, int iter_num)
             igl::scaf::compute_energy(s, s.w_uv, false) / s.mesh_measure;
     }
 
-    // return s.w_uv.topRows(s.mv_num);
     return true;
 }
 
@@ -1054,11 +1043,7 @@ IGL_INLINE bool igl::scaf_solve_step(SCAFData &s, int iter_num)
         if(!igl::scaf_solve_pre(s))
             return false;
 
-        // FIXME:
-        // if(!igl::mesh_improve_step(s))
-        //     return false;
-
-        if(!mesh_improve(s))
+        if(!igl::mesh_improve_step(s))
             return false;
 
         if(!igl::scaf_solve_post(s))
