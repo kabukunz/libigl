@@ -685,8 +685,8 @@ IGL_INLINE bool igl::mesh_improve_pre(
     )
 {
     using namespace Eigen;
+    
     // MatrixXd m_uv = s.w_uv.topRows(s.mv_num);
-    // m_uv.resize(s.mv_num, s.w_uv.cols());
     m_uv = s.w_uv.topRows(s.mv_num);
     MatrixXd V_bnd;
     V_bnd.resize(s.internal_bnd.size(), 2);
