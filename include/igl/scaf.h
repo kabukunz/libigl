@@ -24,14 +24,15 @@ namespace igl
     // Zhongshi Jiang, Scott Schaefer, Daniele Panozzo, ACM Trancaction on Graphics (Proc. SIGGRAPH Asia 2017)
     // For a complete implementation and customized UI, please refer to https://github.com/jiangzhongshi/scaffold-map
 
-    enum class SCAFRemesher
+    enum class SCAFRemesherType
     {
 #ifdef LIBIGL_WITH_TRIANGLE
         TRIANGLE,
-#endif        
+#endif
 #ifdef LIBIGL_WITH_MMG
         MMG,
 #endif
+        AUTO,
     };
 
     enum class SCAFError
@@ -46,8 +47,17 @@ namespace igl
         Eigen::MatrixXd V;
         Eigen::MatrixXi E;
         Eigen::MatrixXd H;
+        Eigen::MatrixXi V2;
+        Eigen::MatrixXi F2;
+
         Eigen::MatrixXd m_uv;
         Eigen::MatrixXd uv2;
+    };
+
+    struct SCAFRemesher
+    {
+        SCAFRemesherData scafRemesherData;
+        void SCAFRemesherCallback(SCAFRemesherData);
     };
 
     struct SCAFData
@@ -97,7 +107,7 @@ namespace igl
         Eigen::MatrixXd W_m, W_s;
 
         // remesher type
-        SCAFRemesher r;
+        SCAFRemesherType r;
 
         // remesher data
         SCAFRemesherData rd;
@@ -176,6 +186,10 @@ namespace igl
     IGL_INLINE bool mesh_improve_pre(igl::SCAFData &s);
     IGL_INLINE bool mesh_improve_remesh(igl::SCAFData &s);
     IGL_INLINE bool mesh_improve_post(igl::SCAFData &s);
+
+    // callback
+    std::function<SCAFRemesherData(igl::SCAFRemesher &)> scafRemesherData1 = &SCAFRemesher::scafRemesherData;
+    std::function<void(igl::SCAFRemesher &)> scafRemesherCallback1 = &SCAFRemesher::scafRemesherCallback;
 
 }
 

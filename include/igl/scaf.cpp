@@ -605,7 +605,7 @@ bool igl::mesh_improve(igl::SCAFData &s)
     }
 
 #ifdef LIBIGL_WITH_MMG
-    if(s.r == SCAFRemesher::MMG)
+    if(s.r == SCAFRemesherType::MMG)
     {
         for (size_t i = 0; i < s.o.mmg2d_iter; i++)
         {
@@ -619,7 +619,7 @@ bool igl::mesh_improve(igl::SCAFData &s)
 #endif
 
 #ifdef LIBIGL_WITH_TRIANGLE
-    if(s.r == SCAFRemesher::TRIANGLE)
+    if(s.r == SCAFRemesherType::TRIANGLE)
     {
         igl::triangle::triangulate(V, E, H, std::basic_string<char>("qYYQ"), uv2, s.s_T);
     }
@@ -777,7 +777,7 @@ IGL_INLINE bool igl::mesh_improve_remesh(igl::SCAFData &s)
     Eigen::MatrixXd uv2;
 
 #ifdef LIBIGL_WITH_MMG
-    if(s.r == SCAFRemesher::MMG)
+    if(s.r == SCAFRemesherType::MMG)
     {
         for (size_t i = 0; i < s.o.mmg2d_iter; i++)
         {
@@ -791,11 +791,16 @@ IGL_INLINE bool igl::mesh_improve_remesh(igl::SCAFData &s)
 #endif
 
 #ifdef LIBIGL_WITH_TRIANGLE
-    if(s.r == SCAFRemesher::TRIANGLE)
+    if(s.r == SCAFRemesherType::TRIANGLE)
     {
         igl::triangle::triangulate(V, E, H, std::basic_string<char>("qYYQ"), uv2, s.s_T);
     }
 #endif
+
+    if(s.r == SCAFRemesherType::AUTO)
+    {
+
+    }
 
     s.rd.uv2 = uv2;
 
@@ -1079,6 +1084,11 @@ IGL_INLINE bool igl::scaf_solve_post(SCAFData &s)
     s.energy =
         igl::scaf::compute_energy(s, s.w_uv, false) / s.mesh_measure;
 
+    return true;
+}
+
+IGL_INLINE bool igl::SCAFRemesher(igl::SCAFRemesherData &rd)
+{
     return true;
 }
 
