@@ -20,13 +20,6 @@ namespace igl
     // Zhongshi Jiang, Scott Schaefer, Daniele Panozzo, ACM Trancaction on Graphics (Proc. SIGGRAPH Asia 2017)
     // For a complete implementation and customized UI, please refer to https://github.com/jiangzhongshi/scaffold-map
 
-    enum class SCAFRemesher
-    {
-#ifdef LIBIGL_RESTRICTED_TRIANGLE
-        TRIANGLE,
-#endif        
-    };
-
     enum class SCAFError
     {
         NONE,
@@ -89,16 +82,8 @@ namespace igl
         Eigen::MatrixXd Ri_m, Ji_m, Ri_s, Ji_s;
         Eigen::MatrixXd W_m, W_s;
 
-        // remesher type
-        SCAFRemesher r;
-
         // remesher data
         SCAFRemesherData rd;
-
-#ifdef LIBIGL_WITH_MMG
-        // remeshing options for mmg
-        igl::mmg::mmg2d::MMGOptions o;
-#endif
 
         // errors
         SCAFError e;

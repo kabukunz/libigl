@@ -591,8 +591,7 @@ bool igl::mesh_improve(igl::SCAFData &s)
     }
     H /= 3.;
 
-    MatrixXd uv2;
-
+    // CHECK:
     // check for numerical errors
     if (!V.allFinite())
     {
@@ -600,26 +599,9 @@ bool igl::mesh_improve(igl::SCAFData &s)
         return false;
     }
 
-#ifdef LIBIGL_WITH_MMG
-    if(s.r == SCAFRemesher::MMG)
-    {
-        for (size_t i = 0; i < s.o.mmg2d_iter; i++)
-        {
-            if(!igl::mmg::mmg2d::triangulate(V, E, H, uv2, s.s_T, s.o))
-            {
-                s.e = SCAFError::CDT2D;
-                return false;
-            }
-        }
-    }
-#endif
+    MatrixXd uv2;
 
-#ifdef LIBIGL_WITH_TRIANGLE
-    if(s.r == SCAFRemesher::TRIANGLE)
-    {
-        igl::triangle::triangulate(V, E, H, std::basic_string<char>("qYYQ"), uv2, s.s_T);
-    }
-#endif
+    igl::triangle::triangulate(V, E, H, std::basic_string<char>("qYYQ"), uv2, s.s_T);
 
     auto bnd_n = s.internal_bnd.size();
 
@@ -772,26 +754,7 @@ IGL_INLINE bool igl::mesh_improve_remesh(igl::SCAFData &s)
 
     Eigen::MatrixXd uv2;
 
-#ifdef LIBIGL_WITH_MMG
-    if(s.r == SCAFRemesher::MMG)
-    {
-        for (size_t i = 0; i < s.o.mmg2d_iter; i++)
-        {
-            if(!igl::mmg::mmg2d::triangulate(V, E, H, uv2, s.s_T, s.o))
-            {
-                s.e = SCAFError::CDT2D;
-                return false;
-            }
-        }
-    }
-#endif
-
-#ifdef LIBIGL_WITH_TRIANGLE
-    if(s.r == SCAFRemesher::TRIANGLE)
-    {
-        igl::triangle::triangulate(V, E, H, std::basic_string<char>("qYYQ"), uv2, s.s_T);
-    }
-#endif
+    igl::triangle::triangulate(V, E, H, std::basic_string<char>("qYYQ"), uv2, s.s_T);
 
     s.rd.uv2 = uv2;
 
