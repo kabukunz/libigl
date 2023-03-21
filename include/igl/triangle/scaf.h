@@ -118,7 +118,7 @@ namespace igl
     //    b           list of boundary indices into V (soft constraint)
     //    bc          #b by dim list of boundary conditions (soft constraint)
     //    soft_p      Soft penalty factor (can be zero)
-    IGL_INLINE void scaf_precompute(
+    IGL_INLINE bool scaf_precompute(
         const Eigen::MatrixXd &V,
         const Eigen::MatrixXi &F,
         const Eigen::MatrixXd &V_init,
@@ -131,7 +131,7 @@ namespace igl
     // Run iter_num iterations of SCAF, with precomputed data
     // Outputs:
     //    V_o (in SLIMData): #V by dim list of mesh vertex positions
-    IGL_INLINE Eigen::MatrixXd scaf_solve(triangle::SCAFData &data, int iter_num);
+    IGL_INLINE bool scaf_solve(triangle::SCAFData &data, int iter_num);
 
     // Set up the SCAF system L * uv = rhs, without solving it.
     // Inputs:
