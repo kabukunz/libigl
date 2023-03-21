@@ -32,7 +32,7 @@ namespace igl
 #ifdef LIBIGL_WITH_MMG
         MMG,
 #endif
-        AUTO,
+        CALLBACK,
     };
 
     enum class SCAFError
@@ -54,11 +54,7 @@ namespace igl
         Eigen::MatrixXd uv2;
     };
 
-    struct SCAFRemesher
-    {
-        SCAFRemesherData scafRemesherData;
-        void SCAFRemesherCallback(SCAFRemesherData);
-    };
+    struct SCAFRemesher { virtual bool remesh(SCAFRemesherData &scafRemesherData){}; };
 
     struct SCAFData
     {
@@ -111,6 +107,9 @@ namespace igl
 
         // remesher data
         SCAFRemesherData rd;
+
+        // remesher function
+        SCAFRemesher *sr;
 
 #ifdef LIBIGL_WITH_MMG
         // remeshing options for mmg
@@ -188,9 +187,17 @@ namespace igl
     IGL_INLINE bool mesh_improve_post(igl::SCAFData &s);
 
     // callback
-    std::function<SCAFRemesherData(igl::SCAFRemesher &)> scafRemesherData1 = &SCAFRemesher::scafRemesherData;
-    std::function<void(igl::SCAFRemesher &)> scafRemesherCallback1 = &SCAFRemesher::scafRemesherCallback;
+    // std::function<igl::SCAFRemesherData &(igl::SCAFRemesherData &)> scafRemesher;
 
+    // callback type
+    std::function<void(int)> mesh_improve_callback;
+
+    // // store
+    // IGL_INLINE void mesh_improve_store_callback(int i, SCAFCallback scafCallback)
+    // {
+    //     mesh_improve_callback = scafCallback;
+    //     someFunc();
+    // }
 }
 
 #ifndef IGL_STATIC_LIBRARY

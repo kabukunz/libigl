@@ -604,26 +604,40 @@ bool igl::mesh_improve(igl::SCAFData &s)
         return false;
     }
 
-#ifdef LIBIGL_WITH_MMG
-    if(s.r == SCAFRemesherType::MMG)
-    {
-        for (size_t i = 0; i < s.o.mmg2d_iter; i++)
-        {
-            if(!igl::mmg::mmg2d::triangulate(V, E, H, uv2, s.s_T, s.o))
-            {
-                s.e = SCAFError::CDT2D;
-                return false;
-            }
-        }
-    }
-#endif
+// #ifdef LIBIGL_WITH_MMG
+//     if(s.r == SCAFRemesherType::MMG)
+//     {
+//         for (size_t i = 0; i < s.o.mmg2d_iter; i++)
+//         {
+//             if(!igl::mmg::mmg2d::triangulate(V, E, H, uv2, s.s_T, s.o))
+//             {
+//                 s.e = SCAFError::CDT2D;
+//                 return false;
+//             }
+//         }
+//     }
+// #endif
 
-#ifdef LIBIGL_WITH_TRIANGLE
-    if(s.r == SCAFRemesherType::TRIANGLE)
-    {
-        igl::triangle::triangulate(V, E, H, std::basic_string<char>("qYYQ"), uv2, s.s_T);
-    }
-#endif
+// #ifdef LIBIGL_WITH_TRIANGLE
+//     if(s.r == SCAFRemesherType::TRIANGLE)
+//     {
+//         igl::triangle::triangulate(V, E, H, std::basic_string<char>("qYYQ"), uv2, s.s_T);
+//     }
+// #endif
+
+    igl::SCAFRemesherData scafRemesherData = {};
+    bool result = s.sr->remesh(scafRemesherData);
+
+//     if(s.r == SCAFRemesherType::CALLBACK)
+//     {
+        // mesh_improve_callback(20);
+        // igl::triangle::triangulate(V, E, H, std::basic_string<char>("qYYQ"), uv2, s.s_T);
+        // V = igl::scafRemesherData.V;
+        // E = igl::scafRemesherData.E;
+        // H = igl::scafRemesherData.H;
+        // uv2 = igl::scafRemesherData.V2;
+        // s.s_T = igl::scafRemesherData.F2;
+    // }
 
     auto bnd_n = s.internal_bnd.size();
 
@@ -797,7 +811,7 @@ IGL_INLINE bool igl::mesh_improve_remesh(igl::SCAFData &s)
     }
 #endif
 
-    if(s.r == SCAFRemesherType::AUTO)
+    if(s.r == SCAFRemesherType::CALLBACK)
     {
 
     }
@@ -1084,11 +1098,6 @@ IGL_INLINE bool igl::scaf_solve_post(SCAFData &s)
     s.energy =
         igl::scaf::compute_energy(s, s.w_uv, false) / s.mesh_measure;
 
-    return true;
-}
-
-IGL_INLINE bool igl::SCAFRemesher(igl::SCAFRemesherData &rd)
-{
     return true;
 }
 

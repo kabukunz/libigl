@@ -12,6 +12,9 @@
 #include <igl/flipped_triangles.h>
 #include <igl/topological_hole_fill.h>
 
+#include <memory>
+#include <functional>
+
 #include "tutorial_shared_path.h"
 
 Eigen::MatrixXd V;
@@ -23,105 +26,164 @@ igl::SCAFData scaf_data;
 bool show_uv = false;
 float uv_scale = 0.2f;
 
-bool key_down(igl::opengl::glfw::Viewer& viewer, unsigned char key, int modifier)
+bool key_down(igl::opengl::glfw::Viewer &viewer, unsigned char key, int modifier)
 {
-  if (key == '1')
-    show_uv = false;
-  else if (key == '2')
-    show_uv = true;
+    if (key == '1')
+        show_uv = false;
+    else if (key == '2')
+        show_uv = true;
 
-  if (key == ' ')
-  {
-    timer.start();
-    igl::scaf_solve_step(scaf_data, 1);
-    std::cout << "time = " << timer.getElapsedTime() << std::endl;
-  }
+    if (key == ' ')
+    {
+        timer.start();
+        igl::scaf_solve_step(scaf_data, 1);
+        std::cout << "time = " << timer.getElapsedTime() << std::endl;
+    }
 
-  const auto& V_uv = uv_scale * scaf_data.w_uv.topRows(V.rows());
-  if (show_uv)
-  {
-    viewer.data().clear();
-    viewer.data().set_mesh(V_uv,F);
-    viewer.data().set_uv(V_uv);
-    viewer.core().align_camera_center(V_uv,F);
-  }
-  else
-  {
-    viewer.data().set_mesh(V,F);
-    viewer.data().set_uv(V_uv);
-    viewer.core().align_camera_center(V,F);
-  }
+    const auto &V_uv = uv_scale * scaf_data.w_uv.topRows(V.rows());
+    if (show_uv)
+    {
+        viewer.data().clear();
+        viewer.data().set_mesh(V_uv, F);
+        viewer.data().set_uv(V_uv);
+        viewer.core().align_camera_center(V_uv, F);
+    }
+    else
+    {
+        viewer.data().set_mesh(V, F);
+        viewer.data().set_uv(V_uv);
+        viewer.core().align_camera_center(V, F);
+    }
 
-  viewer.data().compute_normals();
+    viewer.data().compute_normals();
 
-  return false;
+    return false;
+}
+
+void f(int n)
+{
+    std::cout << n << '\n';
 }
 
 int main(int argc, char *argv[])
 {
-  using namespace std;
-  // Load a mesh in OFF format
-  igl::readOBJ(TUTORIAL_SHARED_PATH "/camel_b.obj", V, F);
+    using namespace std;
+    // Load a mesh in OFF format
+    igl::readOBJ(TUTORIAL_SHARED_PATH "/camel_b.obj", V, F);
 
-  Eigen::MatrixXd bnd_uv, uv_init;
+    Eigen::MatrixXd bnd_uv, uv_init;
 
-  Eigen::VectorXd M;
-  igl::doublearea(V, F, M);
-  std::vector<std::vector<int>> all_bnds;
-  igl::boundary_loop(F, all_bnds);
+    Eigen::VectorXd M;
+    igl::doublearea(V, F, M);
+    std::vector<std::vector<int>> all_bnds;
+    igl::boundary_loop(F, all_bnds);
 
-  // Heuristic primary boundary choice: longest
-  auto primary_bnd = std::max_element(all_bnds.begin(), all_bnds.end(), [](const std::vector<int> &a, const std::vector<int> &b) { return a.size()<b.size(); });
+    // Heuristic primary boundary choice: longest
+    auto primary_bnd = std::max_element(all_bnds.begin(), all_bnds.end(), [](const std::vector<int> &a, const std::vector<int> &b)
+                                        { return a.size() < b.size(); });
 
-  Eigen::VectorXi bnd = Eigen::Map<Eigen::VectorXi>(primary_bnd->data(), primary_bnd->size());
+    Eigen::VectorXi bnd = Eigen::Map<Eigen::VectorXi>(primary_bnd->data(), primary_bnd->size());
 
-  igl::map_vertices_to_circle(V, bnd, bnd_uv);
-  bnd_uv *= sqrt(M.sum() / (2 * igl::PI));
-  if (all_bnds.size() == 1)
-  {
-    if (bnd.rows() == V.rows()) // case: all vertex on boundary
+    igl::map_vertices_to_circle(V, bnd, bnd_uv);
+    bnd_uv *= sqrt(M.sum() / (2 * igl::PI));
+    if (all_bnds.size() == 1)
     {
-      uv_init.resize(V.rows(), 2);
-      for (int i = 0; i < bnd.rows(); i++)
-        uv_init.row(bnd(i)) = bnd_uv.row(i);
+        if (bnd.rows() == V.rows()) // case: all vertex on boundary
+        {
+            uv_init.resize(V.rows(), 2);
+            for (int i = 0; i < bnd.rows(); i++)
+                uv_init.row(bnd(i)) = bnd_uv.row(i);
+        }
+        else
+        {
+            igl::harmonic(V, F, bnd, bnd_uv, 1, uv_init);
+            if (igl::flipped_triangles(uv_init, F).size() != 0)
+                igl::harmonic(F, bnd, bnd_uv, 1, uv_init); // fallback uniform laplacian
+        }
     }
     else
     {
-      igl::harmonic(V, F, bnd, bnd_uv, 1, uv_init);
-      if (igl::flipped_triangles(uv_init, F).size() != 0)
-        igl::harmonic(F, bnd, bnd_uv, 1, uv_init); // fallback uniform laplacian
+        // if there is a hole, fill it and erase additional vertices.
+        all_bnds.erase(primary_bnd);
+        Eigen::MatrixXi F_filled;
+        igl::topological_hole_fill(F, bnd, all_bnds, F_filled);
+        igl::harmonic(F_filled, bnd, bnd_uv, 1, uv_init);
+        uv_init.conservativeResize(V.rows(), 2);
     }
-  }
-  else
-  {
-    // if there is a hole, fill it and erase additional vertices.
-    all_bnds.erase(primary_bnd);
-    Eigen::MatrixXi F_filled;
-    igl::topological_hole_fill(F, bnd, all_bnds, F_filled);
-    igl::harmonic(F_filled, bnd, bnd_uv ,1, uv_init);
-    uv_init.conservativeResize(V.rows(), 2);
-  }
 
-  Eigen::VectorXi b; Eigen::MatrixXd bc;  
-  igl::scaf_precompute_step(V, F, uv_init, scaf_data, igl::MappingEnergyType::SYMMETRIC_DIRICHLET, b, bc, 0);
+    //   auto callback = [&]()
+    //   {
+    //     cout << "got it" << endl;
+    //   };
 
-  // Plot the mesh
-  igl::opengl::glfw::Viewer viewer;
-  viewer.data().set_mesh(V, F);
-  const auto& V_uv = uv_scale * scaf_data.w_uv.topRows(V.rows());
-  viewer.data().set_uv(V_uv);
-  viewer.callback_key_down = &key_down;
+    // struct Foo {
+    //     void print(int n)
+    //     {
+    //         std::cout << n << '\n';
+    //     }
+    //     int data = 10;
+    // };
 
-  // Enable wireframe
-  viewer.data().show_lines = true;
+    auto f1 = std::bind(f, std::placeholders::_1);
+    // f1(10);
 
-  // Draw checkerboard texture
-  viewer.data().show_texture = true;
+    igl::mesh_improve_callback = {};
+    // auto cp = std::make_shared<igl::mesh_improve_callback>();
+    
+    std::bind(&igl::mesh_improve_callback, f);
+    // scaf_data.r = igl::SCAFRemesherType::CALLBACK;
+
+    // std::bind(&callback, this);
+    // std::function<void(int)> func = igl::func;
+    // std::bind(&callback, this);
+    // MyFunc callback = MyFunc();
+    // callback.a = 1;
+    // igl::mesh_improve_callback = std::bind(&callback);
+
+    //   igl::scafRemesher srm;
+    //   = std::bind(&callback, this);
+    //   polyscope::state::userCallback = std::bind(&Viewer::callback, this);
+
+    // 
+    // 
+
+    igl::SCAFRemesher scafRemesher = {};
+
+    struct MYSCAFRemesher : igl::SCAFRemesher
+    {
+        bool remesh(igl::SCAFRemesherData &scafRemesherData) override // 'override' is optional
+        {
+            std::cout << "derived\n";
+            return true;
+        }
+    };
+
+    // std::shared_ptr<MYSCAFRemesher> mySCAFRemesher = std::make_shared<MYSCAFRemesher>();
+    // MYSCAFRemesher mySCAFRemesher = {};
+    // scaf_data.sr = mySCAFRemesher;
 
 
-  std::cerr << "Press space for running an iteration." << std::endl;
-  std::cerr << "Press 1 for Mesh 2 for UV" << std::endl;
+    scaf_data.sr = new MYSCAFRemesher();
+    Eigen::VectorXi b;
+    Eigen::MatrixXd bc;
+    igl::scaf_precompute(V, F, uv_init, scaf_data, igl::MappingEnergyType::SYMMETRIC_DIRICHLET, b, bc, 0);
 
-  // Launch the viewer
-  viewer.launch();
+    // Plot the mesh
+    igl::opengl::glfw::Viewer viewer;
+    viewer.data().set_mesh(V, F);
+    const auto &_uv = uv_scale * scaf_data.w_uv.topRows(V.rows());
+    viewer.data().set_uv(V_uv);
+    viewer.callback_key_down = &key_down;
+
+    // Enable wireframe
+    viewer.data().show_lines = true;
+
+    // Draw checkerboard texture
+    viewer.data().show_texture = true;
+
+    std::cerr << "Press space for running an iteration." << std::endl;
+    std::cerr << "Press 1 for Mesh 2 for UV" << std::endl;
+
+    // Launch the viewer
+    viewer.launch();
 }
