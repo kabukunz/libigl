@@ -22,6 +22,36 @@ namespace igl
     // Zhongshi Jiang, Scott Schaefer, Daniele Panozzo, ACM Trancaction on Graphics (Proc. SIGGRAPH Asia 2017)
     // For a complete implementation and customized UI, please refer to https://github.com/jiangzhongshi/scaffold-map
 
+    enum class SCAFRemesherType
+    {
+        TRIANGLE,
+        EXTERNAL,
+    };
+
+    enum class SCAFError
+    {
+        NONE,
+        NUMERICAL,
+        NODATA,
+        CDT2D,
+    };
+
+    struct SCAFRemesherData
+    {
+        Eigen::MatrixXd V;
+        Eigen::MatrixXi E;
+        Eigen::MatrixXd H;
+        Eigen::MatrixXd V2;
+        Eigen::MatrixXi F2;
+    };
+
+    struct SCAFRemesher {
+        virtual bool remesh(igl::triangle::SCAFRemesherData &scafRemesherData)
+        {
+            return true;
+        };
+    };
+
     struct SCAFData
     {
       double scaffold_factor = 10;
@@ -61,12 +91,21 @@ namespace igl
       std::vector<int> component_sizes;
       std::vector<int> bnd_sizes;
     
-        // reweightedARAP interior variables.
-        bool has_pre_calc = false;
-        Eigen::SparseMatrix<double> Dx_s, Dy_s, Dz_s;
-        Eigen::SparseMatrix<double> Dx_m, Dy_m, Dz_m;
-        Eigen::MatrixXd Ri_m, Ji_m, Ri_s, Ji_s;
-        Eigen::MatrixXd W_m, W_s;
+      // reweightedARAP interior variables.
+      bool has_pre_calc = false;
+      Eigen::SparseMatrix<double> Dx_s, Dy_s, Dz_s;
+      Eigen::SparseMatrix<double> Dx_m, Dy_m, Dz_m;
+      Eigen::MatrixXd Ri_m, Ji_m, Ri_s, Ji_s;
+      Eigen::MatrixXd W_m, W_s;
+      
+      // remesher type
+      SCAFRemesherType rt;
+            
+      // remesh function
+      std::shared_ptr<SCAFRemesher> rm;
+      
+      // errors
+      SCAFError e;
     };
 
 

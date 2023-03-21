@@ -12,11 +12,14 @@
 #include <igl/flipped_triangles.h>
 #include <igl/topological_hole_fill.h>
 
+#include <memory>
+#include <functional>
+
 Eigen::MatrixXd V;
 Eigen::MatrixXi F;
 Eigen::MatrixXd V_uv;
 igl::Timer timer;
-igl::triangle::SCAFData scaf_data;
+igl::SCAFData scaf_data;
 
 bool show_uv = false;
 float uv_scale = 0.2f;
@@ -53,6 +56,11 @@ bool key_down(igl::opengl::glfw::Viewer &viewer, unsigned char key, int modifier
     viewer.data().compute_normals();
 
     return false;
+}
+
+void f(int n)
+{
+    std::cout << n << '\n';
 }
 
 int main(int argc, char *argv[])
@@ -101,7 +109,6 @@ int main(int argc, char *argv[])
         uv_init.conservativeResize(V.rows(), 2);
     }
 
-    // external remesher
     struct MYSCAFRemesher : igl::triangle::SCAFRemesher
     {
         bool remesh(igl::triangle::SCAFRemesherData &scafRemesherData) override // 'override' is optional
@@ -115,9 +122,8 @@ int main(int argc, char *argv[])
     std::shared_ptr<igl::triangle::SCAFRemesher> scafRemesher = std::dynamic_pointer_cast<MYSCAFRemesher>(mySCAFRemesher);
 
     scaf_data = {};
-    scaf_data.rt = igl::triangle::SCAFRemesherType::EXTERNAL;
-    scaf_data.rm = scafRemesher;
-    // 
+    scaf_data.r = igl::triangle::SCAFRemesherType::CALLBACK;
+    scaf_data.sr = scafRemesher;
 
     Eigen::VectorXi b;
     Eigen::MatrixXd bc;
@@ -126,7 +132,7 @@ int main(int argc, char *argv[])
     // Plot the mesh
     igl::opengl::glfw::Viewer viewer;
     viewer.data().set_mesh(V, F);
-    const auto &V_uv = uv_scale * scaf_data.w_uv.topRows(V.rows());
+    const auto &_uv = uv_scale * scaf_data.w_uv.topRows(V.rows());
     viewer.data().set_uv(V_uv);
     viewer.callback_key_down = &key_down;
 

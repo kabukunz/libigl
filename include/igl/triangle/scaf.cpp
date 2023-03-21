@@ -214,10 +214,50 @@ IGL_INLINE void mesh_improve(igl::triangle::SCAFData &s)
   }
   H /= 3.;
 
+  // remeshing
   MatrixXd uv2;
-  igl::triangle::triangulate(V, E, H, std::basic_string<char>("qYYQ"), uv2, s.s_T);
-  auto bnd_n = s.internal_bnd.size();
+  
+  // check for numerical errors
+  if (!V.allFinite())
+  {
+      s.e = SCAFError::NUMERICAL;
+      return;
+  }
+    
+  if(s.rt == SCAFRemesherType::TRIANGLE)
+  {
+      igl::triangle::triangulate(V, E, H, std::basic_string<char>("qYYQ"), uv2, s.s_T);
+  }
+  
+  if(s.rt == SCAFRemesherType::EXTERNAL)
+  {
+      igl::triangle::SCAFRemesherData scafRemesherData = {};
+  
+      scafRemesherData.V = V;
+      scafRemesherData.E = E;
+      scafRemesherData.H = H;
+  
+      bool result = s.rm->remesh(scafRemesherData);
+  
+      if(result)
+      {            
+          uv2 = scafRemesherData.V2;
+          s.s_T = scafRemesherData.F2;
+      }
+  }
+  
+  // check remeshing
+  if(!uv2.rows())
+  {
+      s.e = SCAFError::NODATA;
+      return;
+  }
 
+//   MatrixXd uv2;
+//   igl::triangle::triangulate(V, E, H, std::basic_string<char>("qYYQ"), uv2, s.s_T);
+  
+  auto bnd_n = s.internal_bnd.size();
+  
   for (auto i = 0; i < s.s_T.rows(); i++)
     for (auto j = 0; j < s.s_T.cols(); j++)
     {
