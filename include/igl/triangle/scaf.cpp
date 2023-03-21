@@ -220,7 +220,7 @@ IGL_INLINE void mesh_improve(igl::triangle::SCAFData &s)
   // check for numerical errors
   if (!V.allFinite())
   {
-      s.e = SCAFError::NUMERICAL;
+      s.re = SCAFRemesherError::NUMERICAL;
       return;
   }
     
@@ -241,7 +241,7 @@ IGL_INLINE void mesh_improve(igl::triangle::SCAFData &s)
       
       if (!result)
       {
-        s.e = SCAFError::CDT2D;
+        s.re = SCAFRemesherError::CDT2D;
         return;
       }
   
@@ -253,7 +253,7 @@ IGL_INLINE void mesh_improve(igl::triangle::SCAFData &s)
   // check remeshing
   if(!uv2.rows())
   {
-      s.e = SCAFError::NODATA;
+      s.re = SCAFRemesherError::NODATA;
       return;
   }
 

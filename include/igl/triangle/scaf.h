@@ -28,7 +28,7 @@ namespace igl
         EXTERNAL,
     };
 
-    enum class SCAFError
+    enum class SCAFRemesherError
     {
         NONE,
         NUMERICAL,
@@ -105,7 +105,7 @@ namespace igl
       std::shared_ptr<SCAFRemesher> rm;
       
       // errors
-      SCAFError e;
+      SCAFRemesherError re;
     };
 
 
