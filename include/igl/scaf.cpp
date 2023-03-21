@@ -604,40 +604,50 @@ bool igl::mesh_improve(igl::SCAFData &s)
         return false;
     }
 
-// #ifdef LIBIGL_WITH_MMG
-//     if(s.r == SCAFRemesherType::MMG)
-//     {
-//         for (size_t i = 0; i < s.o.mmg2d_iter; i++)
-//         {
-//             if(!igl::mmg::mmg2d::triangulate(V, E, H, uv2, s.s_T, s.o))
-//             {
-//                 s.e = SCAFError::CDT2D;
-//                 return false;
-//             }
-//         }
-//     }
-// #endif
+#ifdef LIBIGL_WITH_MMG
+    if(s.r == SCAFRemesherType::MMG)
+    {
+        for (size_t i = 0; i < s.o.mmg2d_iter; i++)
+        {
+            if(!igl::mmg::mmg2d::triangulate(V, E, H, uv2, s.s_T, s.o))
+            {
+                s.e = SCAFError::CDT2D;
+                return false;
+            }
+        }
+    }
+#endif
 
-// #ifdef LIBIGL_WITH_TRIANGLE
-//     if(s.r == SCAFRemesherType::TRIANGLE)
-//     {
-//         igl::triangle::triangulate(V, E, H, std::basic_string<char>("qYYQ"), uv2, s.s_T);
-//     }
-// #endif
+#ifdef LIBIGL_WITH_TRIANGLE
+    if(s.r == SCAFRemesherType::TRIANGLE)
+    {
+        igl::triangle::triangulate(V, E, H, std::basic_string<char>("qYYQ"), uv2, s.s_T);
+    }
+#endif
 
-    igl::SCAFRemesherData scafRemesherData = {};
-    bool result = s.sr->remesh(scafRemesherData);
+    if(s.r == SCAFRemesherType::CALLBACK)
+    {
+        igl::SCAFRemesherData scafRemesherData = {};
 
-//     if(s.r == SCAFRemesherType::CALLBACK)
-//     {
-        // mesh_improve_callback(20);
-        // igl::triangle::triangulate(V, E, H, std::basic_string<char>("qYYQ"), uv2, s.s_T);
-        // V = igl::scafRemesherData.V;
-        // E = igl::scafRemesherData.E;
-        // H = igl::scafRemesherData.H;
-        // uv2 = igl::scafRemesherData.V2;
-        // s.s_T = igl::scafRemesherData.F2;
-    // }
+        scafRemesherData.V = V;
+        scafRemesherData.E = E;
+        scafRemesherData.H = H;
+
+        bool result = s.sr->remesh(scafRemesherData);
+
+        if(result)
+        {            
+            uv2 = scafRemesherData.V2;
+            s.s_T = scafRemesherData.F2;
+        }
+    }
+
+    // check remeshing
+    if(!uv2.rows())
+    {
+        s.e = SCAFError::CDT2D;
+        return false;
+    }
 
     auto bnd_n = s.internal_bnd.size();
 

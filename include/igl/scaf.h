@@ -47,7 +47,7 @@ namespace igl
         Eigen::MatrixXd V;
         Eigen::MatrixXi E;
         Eigen::MatrixXd H;
-        Eigen::MatrixXi V2;
+        Eigen::MatrixXd V2;
         Eigen::MatrixXi F2;
 
         Eigen::MatrixXd m_uv;
@@ -109,7 +109,7 @@ namespace igl
         SCAFRemesherData rd;
 
         // remesher function
-        SCAFRemesher *sr;
+        std::shared_ptr<SCAFRemesher> sr;
 
 #ifdef LIBIGL_WITH_MMG
         // remeshing options for mmg
@@ -190,7 +190,7 @@ namespace igl
     // std::function<igl::SCAFRemesherData &(igl::SCAFRemesherData &)> scafRemesher;
 
     // callback type
-    std::function<void(int)> mesh_improve_callback;
+    // std::function<void(int)> mesh_improve_callback;
 
     // // store
     // IGL_INLINE void mesh_improve_store_callback(int i, SCAFCallback scafCallback)

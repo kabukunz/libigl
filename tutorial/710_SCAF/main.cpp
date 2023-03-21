@@ -111,59 +111,22 @@ int main(int argc, char *argv[])
         uv_init.conservativeResize(V.rows(), 2);
     }
 
-    //   auto callback = [&]()
-    //   {
-    //     cout << "got it" << endl;
-    //   };
-
-    // struct Foo {
-    //     void print(int n)
-    //     {
-    //         std::cout << n << '\n';
-    //     }
-    //     int data = 10;
-    // };
-
-    auto f1 = std::bind(f, std::placeholders::_1);
-    // f1(10);
-
-    igl::mesh_improve_callback = {};
-    // auto cp = std::make_shared<igl::mesh_improve_callback>();
-    
-    std::bind(&igl::mesh_improve_callback, f);
-    // scaf_data.r = igl::SCAFRemesherType::CALLBACK;
-
-    // std::bind(&callback, this);
-    // std::function<void(int)> func = igl::func;
-    // std::bind(&callback, this);
-    // MyFunc callback = MyFunc();
-    // callback.a = 1;
-    // igl::mesh_improve_callback = std::bind(&callback);
-
-    //   igl::scafRemesher srm;
-    //   = std::bind(&callback, this);
-    //   polyscope::state::userCallback = std::bind(&Viewer::callback, this);
-
-    // 
-    // 
-
-    igl::SCAFRemesher scafRemesher = {};
-
     struct MYSCAFRemesher : igl::SCAFRemesher
     {
         bool remesh(igl::SCAFRemesherData &scafRemesherData) override // 'override' is optional
         {
-            std::cout << "derived\n";
+            std::cout << "DONE!\n";
             return true;
         }
     };
 
-    // std::shared_ptr<MYSCAFRemesher> mySCAFRemesher = std::make_shared<MYSCAFRemesher>();
-    // MYSCAFRemesher mySCAFRemesher = {};
-    // scaf_data.sr = mySCAFRemesher;
+    std::shared_ptr<MYSCAFRemesher> mySCAFRemesher = std::make_shared<MYSCAFRemesher>();
+    std::shared_ptr<igl::SCAFRemesher> scafRemesher = std::dynamic_pointer_cast<MYSCAFRemesher>(mySCAFRemesher);
 
+    scaf_data = {};
+    scaf_data.r = igl::SCAFRemesherType::CALLBACK;
+    scaf_data.sr = scafRemesher;
 
-    scaf_data.sr = new MYSCAFRemesher();
     Eigen::VectorXi b;
     Eigen::MatrixXd bc;
     igl::scaf_precompute(V, F, uv_init, scaf_data, igl::MappingEnergyType::SYMMETRIC_DIRICHLET, b, bc, 0);
