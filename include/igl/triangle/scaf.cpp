@@ -678,7 +678,7 @@ IGL_INLINE bool igl::triangle::scaf_precompute(
   
   igl::triangle::scaf::add_new_patch(data, V, F, Eigen::RowVector2d(0, 0), V_init);
   
-  if(!mesh_improve(data))
+  if(!scaf::mesh_improve(data))
     return false;
   
   data.soft_const_p = soft_p;
