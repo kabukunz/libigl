@@ -32,8 +32,8 @@ namespace igl
     {
         NONE,
         NUMERICAL,
-        NODATA,
         CDT2D,
+        NODATA,
     };
 
     struct SCAFRemesherData
