@@ -22,13 +22,13 @@ namespace igl
     // Zhongshi Jiang, Scott Schaefer, Daniele Panozzo, ACM Trancaction on Graphics (Proc. SIGGRAPH Asia 2017)
     // For a complete implementation and customized UI, please refer to https://github.com/jiangzhongshi/scaffold-map
 
-    enum class SCAFRemesherType
+    enum class SCAFRemeshType
     {
         TRIANGLE,
         EXTERNAL,
     };
 
-    enum class SCAFRemesherError
+    enum class SCAFRemeshError
     {
         NONE,
         NUMERICAL,
@@ -36,7 +36,7 @@ namespace igl
         NODATA,
     };
 
-    struct SCAFRemesherData
+    struct SCAFRemeshData
     {
         Eigen::MatrixXd V;
         Eigen::MatrixXi E;
@@ -45,8 +45,8 @@ namespace igl
         Eigen::MatrixXi F2;
     };
 
-    struct SCAFRemesher {
-        virtual bool remesh(igl::triangle::SCAFRemesherData &scafRemesherData)
+    struct SCAFRemesh {
+        virtual bool remesh(igl::triangle::SCAFRemeshData &scafRemesherData)
         {
             return true;
         };
@@ -99,13 +99,13 @@ namespace igl
       Eigen::MatrixXd W_m, W_s;
       
       // remesher type
-      SCAFRemesherType rt;
+      SCAFRemeshType rt;
             
       // remesh function
-      std::shared_ptr<SCAFRemesher> rm;
+      std::shared_ptr<SCAFRemesh> rm;
       
       // errors
-      SCAFRemesherError re;
+      SCAFRemeshError re;
     };
 
 

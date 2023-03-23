@@ -55,6 +55,11 @@ bool key_down(igl::opengl::glfw::Viewer &viewer, unsigned char key, int modifier
     return false;
 }
 
+void myRemesh()
+{
+    std::cout << "DONE!\n";
+}
+
 int main(int argc, char *argv[])
 {
     using namespace std;
@@ -102,20 +107,20 @@ int main(int argc, char *argv[])
     }
 
     // external remesher
-    struct MYSCAFRemesher : igl::triangle::SCAFRemesher
+    struct SCAFRemesh : igl::triangle::SCAFRemesh
     {
-        bool remesh(igl::triangle::SCAFRemesherData &scafRemesherData) override // 'override' is optional
-        {
-            std::cout << "DONE!\n";
+        bool remesh(igl::triangle::SCAFRemeshData &scafRemesherData) override
+        {            
+            myRemesh();
             return true;
         }
     };
 
-    std::shared_ptr<MYSCAFRemesher> mySCAFRemesher = std::make_shared<MYSCAFRemesher>();
-    std::shared_ptr<igl::triangle::SCAFRemesher> scafRemesher = std::dynamic_pointer_cast<MYSCAFRemesher>(mySCAFRemesher);
+    std::shared_ptr<SCAFRemesh> scafRemesh = std::make_shared<SCAFRemesh>();
+    std::shared_ptr<igl::triangle::SCAFRemesh> scafRemesher = std::dynamic_pointer_cast<SCAFRemesh>(scafRemesh);
 
     scaf_data = {};
-    scaf_data.rt = igl::triangle::SCAFRemesherType::EXTERNAL;
+    scaf_data.rt = igl::triangle::SCAFRemeshType::EXTERNAL;
     scaf_data.rm = scafRemesher;
     // 
 

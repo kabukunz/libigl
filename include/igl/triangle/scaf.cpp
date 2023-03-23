@@ -220,18 +220,18 @@ IGL_INLINE bool mesh_improve(igl::triangle::SCAFData &s)
   // check for numerical errors
   if (!V.allFinite())
   {
-      s.re = SCAFRemesherError::NUMERICAL;
+      s.re = SCAFRemeshError::NUMERICAL;
       return false;
   }
     
-  if(s.rt == SCAFRemesherType::TRIANGLE)
+  if(s.rt == SCAFRemeshType::TRIANGLE)
   {
       igl::triangle::triangulate(V, E, H, std::basic_string<char>("qYYQ"), uv2, s.s_T);
   }
   
-  if(s.rt == SCAFRemesherType::EXTERNAL)
+  if(s.rt == SCAFRemeshType::EXTERNAL)
   {
-      igl::triangle::SCAFRemesherData scafRemesherData = {};
+      igl::triangle::SCAFRemeshData scafRemesherData = {};
   
       scafRemesherData.V = V;
       scafRemesherData.E = E;
@@ -241,7 +241,7 @@ IGL_INLINE bool mesh_improve(igl::triangle::SCAFData &s)
       
       if (!result)
       {
-        s.re = SCAFRemesherError::CDT2D;
+        s.re = SCAFRemeshError::CDT2D;
         return false;
       }
   
@@ -253,7 +253,7 @@ IGL_INLINE bool mesh_improve(igl::triangle::SCAFData &s)
   // check remeshing
   if(!uv2.rows())
   {
-      s.re = SCAFRemesherError::NODATA;
+      s.re = SCAFRemeshError::NODATA;
       return false;
   }
 
