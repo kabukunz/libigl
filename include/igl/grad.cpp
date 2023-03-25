@@ -57,30 +57,30 @@ IGL_INLINE void grad_tet(
   } else {
     // Use a uniform tetrahedra as a reference, with the same volume as the original one:
     //
-    // Use normals of the uniform tet (V = h*[0,0,0;1,0,0;0.5,sqrt(3)/2.,0;0.5,sqrt(3)/6.,sqrt(2)/sqrt(3)])
+    // Use normals of the uniform tet (V = h*[0,0,0;1,0,0;0.5,std::sqrt(3)/2.,0;0.5,std::sqrt(3)/6.,sqrt(2)/std::sqrt(3)])
     //         0         0    1.0000
     //         0.8165   -0.4714   -0.3333
     //         0          0.9428   -0.3333
     //         -0.8165   -0.4714   -0.3333
     for (int i = 0; i < m; i++) {
       N.row(0*m+i) << 0,0,1;
-      double a = sqrt(2)*std::cbrt(3*vol(i)); // area of a face in a uniform tet with volume = vol(i)
-      A(0*m+i) = (pow(a,2)*sqrt(3))/4.;
+      double a = std::sqrt(2)*std::cbrt(3*vol(i)); // area of a face in a uniform tet with volume = vol(i)
+      A(0*m+i) = (pow(a,2)*std::sqrt(3))/4.;
     }
     for (int i = 0; i < m; i++) {
       N.row(1*m+i) << 0.8165,-0.4714,-0.3333;
-      double a = sqrt(2)*std::cbrt(3*vol(i));
-      A(1*m+i) = (pow(a,2)*sqrt(3))/4.;
+      double a = std::sqrt(2)*std::cbrt(3*vol(i));
+      A(1*m+i) = (pow(a,2)*std::sqrt(3))/4.;
     }
     for (int i = 0; i < m; i++) {
       N.row(2*m+i) << 0,0.9428,-0.3333;
-      double a = sqrt(2)*std::cbrt(3*vol(i));
-      A(2*m+i) = (pow(a,2)*sqrt(3))/4.;
+      double a = std::sqrt(2)*std::cbrt(3*vol(i));
+      A(2*m+i) = (pow(a,2)*std::sqrt(3))/4.;
     }
     for (int i = 0; i < m; i++) {
       N.row(3*m+i) << -0.8165,-0.4714,-0.3333;
-      double a = sqrt(2)*std::cbrt(3*vol(i));
-      A(3*m+i) = (pow(a,2)*sqrt(3))/4.;
+      double a = std::sqrt(2)*std::cbrt(3*vol(i));
+      A(3*m+i) = (pow(a,2)*std::sqrt(3))/4.;
     }
 
   }
@@ -163,15 +163,15 @@ IGL_INLINE void grad_tri(
       // now normalize normals to get unit normals
       u = n / dblA;
     } else {
-      // Abstract equilateral triangle v1=(0,0), v2=(h,0), v3=(h/2, (sqrt(3)/2)*h)
+      // Abstract equilateral triangle v1=(0,0), v2=(h,0), v3=(h/2,  (std::sqrt(3)/2)*h)
 
       // get h (by the area of the triangle)
-      double h = sqrt( (dblA)/sin(igl::PI / 3.0)); // (h^2*sin(60))/2. = Area => h = sqrt(2*Area/sin_60)
+      double h = std::sqrt( (dblA)/sin(igl::PI / 3.0)); // (h^2*sin(60))/2. = Area => h = std::sqrt(2*Area/sin_60)
 
       Eigen::Matrix<typename DerivedV::Scalar, 3, 1> v1,v2,v3;
       v1 << 0,0,0;
       v2 << h,0,0;
-      v3 << h/2.,(sqrt(3)/2.)*h,0;
+      v3 << h/2.,(std::sqrt(3)/2.)*h,0;
 
       // now fix v32,v13,v21 and the normal
       v32 = v3-v2;
