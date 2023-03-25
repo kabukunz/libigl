@@ -22,6 +22,36 @@ namespace igl
     // Zhongshi Jiang, Scott Schaefer, Daniele Panozzo, ACM Trancaction on Graphics (Proc. SIGGRAPH Asia 2017)
     // For a complete implementation and customized UI, please refer to https://github.com/jiangzhongshi/scaffold-map
 
+    enum class SCAFRemeshType
+    {
+        TRIANGLE,
+        EXTERNAL,
+    };
+
+    enum class SCAFRemeshError
+    {
+        NONE,
+        NUMERICAL,
+        CDT2D,
+        NODATA,
+    };
+
+    struct SCAFRemeshData
+    {
+        Eigen::MatrixXd V;
+        Eigen::MatrixXi E;
+        Eigen::MatrixXd H;
+        Eigen::MatrixXd V2;
+        Eigen::MatrixXi F2;
+    };
+
+    struct SCAFRemesh {
+        virtual bool remesh(igl::triangle::SCAFRemeshData &scafRemesherData)
+        {
+            return true;
+        };
+    };
+
     struct SCAFData
     {
       double scaffold_factor = 10;
@@ -61,12 +91,21 @@ namespace igl
       std::vector<int> component_sizes;
       std::vector<int> bnd_sizes;
     
-        // reweightedARAP interior variables.
-        bool has_pre_calc = false;
-        Eigen::SparseMatrix<double> Dx_s, Dy_s, Dz_s;
-        Eigen::SparseMatrix<double> Dx_m, Dy_m, Dz_m;
-        Eigen::MatrixXd Ri_m, Ji_m, Ri_s, Ji_s;
-        Eigen::MatrixXd W_m, W_s;
+      // reweightedARAP interior variables.
+      bool has_pre_calc = false;
+      Eigen::SparseMatrix<double> Dx_s, Dy_s, Dz_s;
+      Eigen::SparseMatrix<double> Dx_m, Dy_m, Dz_m;
+      Eigen::MatrixXd Ri_m, Ji_m, Ri_s, Ji_s;
+      Eigen::MatrixXd W_m, W_s;
+      
+      // remesher type
+      SCAFRemeshType rt;
+            
+      // remesh function
+      std::shared_ptr<SCAFRemesh> rm;
+      
+      // errors
+      SCAFRemeshError re;
     };
 
 
@@ -79,7 +118,7 @@ namespace igl
     //    b           list of boundary indices into V (soft constraint)
     //    bc          #b by dim list of boundary conditions (soft constraint)
     //    soft_p      Soft penalty factor (can be zero)
-    IGL_INLINE void scaf_precompute(
+    IGL_INLINE bool scaf_precompute(
         const Eigen::MatrixXd &V,
         const Eigen::MatrixXi &F,
         const Eigen::MatrixXd &V_init,
@@ -92,7 +131,7 @@ namespace igl
     // Run iter_num iterations of SCAF, with precomputed data
     // Outputs:
     //    V_o (in SLIMData): #V by dim list of mesh vertex positions
-    IGL_INLINE Eigen::MatrixXd scaf_solve(triangle::SCAFData &data, int iter_num);
+    IGL_INLINE bool scaf_solve(triangle::SCAFData &data, int iter_num);
 
     // Set up the SCAF system L * uv = rhs, without solving it.
     // Inputs:
