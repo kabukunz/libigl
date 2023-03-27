@@ -7,7 +7,7 @@
 // obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "scaf.h"
-#ifdef LIBIGL_RESTRICTED_TRIANGLE_NOEXTERNAL
+#ifndef LIBIGL_RESTRICTED_TRIANGLE_EXTERNAL
 #include "triangulate.h"
 #endif
 
@@ -228,7 +228,7 @@ IGL_INLINE bool mesh_improve(igl::triangle::SCAFData &s)
 
   if(s.rt == SCAFRemeshType::TRIANGLE)
   {
-#ifdef LIBIGL_RESTRICTED_TRIANGLE_NOEXTERNAL
+#ifndef LIBIGL_RESTRICTED_TRIANGLE_EXTERNAL
       igl::triangle::triangulate(V, E, H, std::basic_string<char>("qYYQ"), uv2, s.s_T);
 #endif
   }
