@@ -55,7 +55,7 @@ bool key_down(igl::opengl::glfw::Viewer &viewer, unsigned char key, int modifier
     return false;
 }
 
-void myRemesh()
+void externalRemesh()
 {
     std::cout << "DONE!\n";
 }
@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
     {
         bool remesh(igl::triangle::SCAFRemeshData &scafRemesherData) override
         {            
-            myRemesh();
+            externalRemesh();
             return true;
         }
     };

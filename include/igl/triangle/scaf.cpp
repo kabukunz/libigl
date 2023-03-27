@@ -7,7 +7,9 @@
 // obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "scaf.h"
+#ifndef LIBIGL_RESTRICTED_TRIANGLE_EXTERNAL
 #include "triangulate.h"
+#endif
 
 #include <Eigen/Dense>
 #include <Eigen/IterativeLinearSolvers>
@@ -223,21 +225,23 @@ IGL_INLINE bool mesh_improve(igl::triangle::SCAFData &s)
       s.re = SCAFRemeshError::NUMERICAL;
       return false;
   }
-    
+
   if(s.rt == SCAFRemeshType::TRIANGLE)
   {
+#ifndef LIBIGL_RESTRICTED_TRIANGLE_EXTERNAL        
       igl::triangle::triangulate(V, E, H, std::basic_string<char>("qYYQ"), uv2, s.s_T);
+#endif
   }
-  
+
   if(s.rt == SCAFRemeshType::EXTERNAL)
   {
-      igl::triangle::SCAFRemeshData scafRemesherData = {};
+      igl::triangle::SCAFRemeshData scafRemeshData = {};
   
-      scafRemesherData.V = V;
-      scafRemesherData.E = E;
-      scafRemesherData.H = H;
+      scafRemeshData.V = V;
+      scafRemeshData.E = E;
+      scafRemeshData.H = H;
   
-      bool result = s.rm->remesh(scafRemesherData);
+      bool result = s.rm->remesh(scafRemeshData);
       
       if (!result)
       {
@@ -245,8 +249,8 @@ IGL_INLINE bool mesh_improve(igl::triangle::SCAFData &s)
         return false;
       }
   
-      uv2 = scafRemesherData.V2;
-      s.s_T = scafRemesherData.F2;
+      uv2 = scafRemeshData.V2;
+      s.s_T = scafRemeshData.F2;
 
   }
   
