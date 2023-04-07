@@ -11,6 +11,8 @@
 #include "triangulate.h"
 #endif
 
+#include <igl/writeOBJ.h>
+
 #include <Eigen/Dense>
 #include <Eigen/IterativeLinearSolvers>
 #include <Eigen/Sparse>
@@ -253,13 +255,20 @@ IGL_INLINE bool mesh_improve(igl::triangle::SCAFData &s)
       s.s_T = scafRemeshData.F2;
 
   }
-  
+
   // check remeshing
   if(!uv2.rows())
   {
       s.re = SCAFRemeshError::NODATA;
       return false;
   }
+
+  // Save the mesh in OBJ format
+  MatrixXd uv3(uv2.rows(),3);
+  uv3.col(0) = uv2.col(0);
+  uv3.col(1) = uv2.col(1);
+  uv3.col(2).setZero();
+  igl::writeOBJ("scaf.obj", uv3, s.s_T);
 
   auto bnd_n = s.internal_bnd.size();
 
