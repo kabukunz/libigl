@@ -21,17 +21,46 @@ igl::triangle::SCAFData scaf_data;
 bool show_uv = false;
 float uv_scale = 0.2f;
 
+// external remesher
+struct SCAFRemesh : igl::triangle::SCAFRemesh
+{
+    bool remesh(igl::triangle::SCAFRemeshData &scafRemesherData) override
+    {
+        std::cout << "DONE!\n";
+        return true;
+    }
+};
+
 bool key_down(igl::opengl::glfw::Viewer &viewer, unsigned char key, int modifier)
 {
     if (key == '1')
         show_uv = false;
     else if (key == '2')
         show_uv = true;
-
+    else if (key == '3')
+    {
+        if(scaf_data.rt == igl::triangle::SCAFRemeshType::TRIANGLE)
+        {
+            scaf_data.rt = igl::triangle::SCAFRemeshType::EXTERNAL;
+            std::cout << "remesh: external" << std::endl;
+        }
+        else
+        {
+            scaf_data.rt = igl::triangle::SCAFRemeshType::TRIANGLE;
+            std::cout << "remesh: Triangle" << std::endl;
+        }
+    }
+        
     if (key == ' ')
     {
         timer.start();
-        igl::triangle::scaf_solve(scaf_data, 1);
+        
+        if (!igl::triangle::scaf_solve(scaf_data, 1))
+        {
+            std::cerr << "solve failed!" << std::endl;
+            return EXIT_FAILURE;
+        }
+
         std::cout << "time = " << timer.getElapsedTime() << std::endl;
     }
 
@@ -53,11 +82,6 @@ bool key_down(igl::opengl::glfw::Viewer &viewer, unsigned char key, int modifier
     viewer.data().compute_normals();
 
     return false;
-}
-
-void externalRemesh()
-{
-    std::cout << "DONE!\n";
 }
 
 int main(int argc, char *argv[])
@@ -106,27 +130,21 @@ int main(int argc, char *argv[])
         uv_init.conservativeResize(V.rows(), 2);
     }
 
-    // external remesher
-    struct SCAFRemesh : igl::triangle::SCAFRemesh
-    {
-        bool remesh(igl::triangle::SCAFRemeshData &scafRemesherData) override
-        {            
-            externalRemesh();
-            return true;
-        }
-    };
-
-    std::shared_ptr<SCAFRemesh> scafRemesh = std::make_shared<SCAFRemesh>();
-    std::shared_ptr<igl::triangle::SCAFRemesh> scafRemesher = std::dynamic_pointer_cast<SCAFRemesh>(scafRemesh);
-
     scaf_data = {};
-    scaf_data.rt = igl::triangle::SCAFRemeshType::EXTERNAL;
-    scaf_data.rm = scafRemesher;
-    // 
+    scaf_data.rt = igl::triangle::SCAFRemeshType::TRIANGLE;
+    
+    std::shared_ptr<SCAFRemesh> scafRemesh = std::make_shared<SCAFRemesh>();
+    std::shared_ptr<igl::triangle::SCAFRemesh> externalRemesh = std::dynamic_pointer_cast<SCAFRemesh>(scafRemesh);;
+    scaf_data.rm = externalRemesh;
 
     Eigen::VectorXi b;
     Eigen::MatrixXd bc;
-    igl::triangle::scaf_precompute(V, F, uv_init, scaf_data, igl::MappingEnergyType::SYMMETRIC_DIRICHLET, b, bc, 0);
+
+    if (!igl::triangle::scaf_precompute(V, F, uv_init, scaf_data, igl::MappingEnergyType::SYMMETRIC_DIRICHLET, b, bc, 0))
+    {
+        std::cerr << "precompute failed!" << std::endl;
+        return EXIT_FAILURE;
+    }
 
     // Plot the mesh
     igl::opengl::glfw::Viewer viewer;
@@ -143,6 +161,7 @@ int main(int argc, char *argv[])
 
     std::cerr << "Press space for running an iteration." << std::endl;
     std::cerr << "Press 1 for Mesh 2 for UV" << std::endl;
+    std::cerr << "Press 3 to switch to external remesh" << std::endl;
 
     // Launch the viewer
     viewer.launch();
