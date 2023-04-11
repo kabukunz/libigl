@@ -41,6 +41,7 @@ namespace igl
         Eigen::MatrixXd V;
         Eigen::MatrixXi E;
         Eigen::MatrixXd H;
+        Eigen::MatrixXd S;
         Eigen::MatrixXd V2;
         Eigen::MatrixXi F2;
     };
