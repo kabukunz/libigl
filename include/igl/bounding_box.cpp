@@ -61,12 +61,10 @@ IGL_INLINE void igl::bounding_box(
   switch(dim)
   {
     case 2:
-      BF.resize(4,2);
+      BF.resize(2,3);
       BF<<
-        3,1,
-        1,0,
-        0,2,
-        2,3;
+        0,1,2,
+        2,1,3;
       break;
     case 3:
       BF.resize(12,3);
