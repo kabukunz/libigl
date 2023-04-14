@@ -87,6 +87,7 @@ namespace igl
       double soft_const_p = 1e4;
 
       Eigen::VectorXi internal_bnd;
+      Eigen::MatrixXd V_bnd;
       Eigen::MatrixXd rect_frame_V;
       // multi-chart support
       std::vector<int> component_sizes;
