@@ -239,7 +239,7 @@ IGL_INLINE bool mesh_improve(igl::triangle::SCAFData &s)
   {
       igl::triangle::SCAFRemeshData scafRemeshData = {};
   
-      scafRemeshData.V = V_bnd;
+      scafRemeshData.V = V_bnd; 
       scafRemeshData.E = E;
       scafRemeshData.H = H;
       scafRemeshData.S = s.rect_frame_V;
