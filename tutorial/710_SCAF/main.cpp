@@ -1,4 +1,5 @@
 #include <igl/triangle/scaf.h>
+#include <igl/triangle/triangulate.h>
 #include <igl/arap.h>
 #include <igl/boundary_loop.h>
 #include <igl/harmonic.h>
@@ -24,9 +25,25 @@ float uv_scale = 0.2f;
 // external remesher
 struct SCAFRemesh : igl::triangle::SCAFRemesh
 {
-    bool remesh(igl::triangle::SCAFRemeshData &scafRemesherData) override
+    bool remesh(igl::triangle::SCAFRemeshData &scafRemeshData) override
     {
-        std::cout << "DONE!\n";
+        auto &V = scafRemeshData.V;
+        auto &E = scafRemeshData.E;
+        auto &H = scafRemeshData.H;
+        auto &S = scafRemeshData.S;
+        auto &V2 = scafRemeshData.V2;
+        auto &F2 = scafRemeshData.F2;
+
+        if (scaf_data.rt == igl::triangle::SCAFRemeshType::TRIANGLE)
+        {
+            igl::triangle::triangulate(V, E, H, std::basic_string<char>("qYYQ"), V2, F2);
+        }
+
+        if (scaf_data.rt == igl::triangle::SCAFRemeshType::EXTERNAL)
+        {
+            std::cout << "DONE!" << std::endl;
+        }
+
         return true;
     }
 };
@@ -39,7 +56,7 @@ bool key_down(igl::opengl::glfw::Viewer &viewer, unsigned char key, int modifier
         show_uv = true;
     else if (key == '3')
     {
-        if(scaf_data.rt == igl::triangle::SCAFRemeshType::TRIANGLE)
+        if (scaf_data.rt == igl::triangle::SCAFRemeshType::TRIANGLE)
         {
             scaf_data.rt = igl::triangle::SCAFRemeshType::EXTERNAL;
             std::cout << "remesh: external" << std::endl;
@@ -50,11 +67,11 @@ bool key_down(igl::opengl::glfw::Viewer &viewer, unsigned char key, int modifier
             std::cout << "remesh: Triangle" << std::endl;
         }
     }
-        
+
     if (key == ' ')
     {
         timer.start();
-        
+
         if (!igl::triangle::scaf_solve(scaf_data, 1))
         {
             std::cerr << "solve failed!" << std::endl;
@@ -98,7 +115,8 @@ int main(int argc, char *argv[])
     igl::boundary_loop(F, all_bnds);
 
     // Heuristic primary boundary choice: longest
-    auto primary_bnd = std::max_element(all_bnds.begin(), all_bnds.end(), [](const std::vector<int> &a, const std::vector<int> &b)
+    auto primary_bnd = std::max_element(all_bnds.begin(), all_bnds.end(),
+                                        [](const std::vector<int> &a, const std::vector<int> &b)
                                         { return a.size() < b.size(); });
 
     Eigen::VectorXi bnd = Eigen::Map<Eigen::VectorXi>(primary_bnd->data(), primary_bnd->size());
@@ -132,9 +150,10 @@ int main(int argc, char *argv[])
 
     scaf_data = {};
     scaf_data.rt = igl::triangle::SCAFRemeshType::TRIANGLE;
-    
+
     std::shared_ptr<SCAFRemesh> scafRemesh = std::make_shared<SCAFRemesh>();
-    std::shared_ptr<igl::triangle::SCAFRemesh> externalRemesh = std::dynamic_pointer_cast<SCAFRemesh>(scafRemesh);;
+    std::shared_ptr<igl::triangle::SCAFRemesh> externalRemesh = std::dynamic_pointer_cast<SCAFRemesh>(scafRemesh);
+    ;
     scaf_data.rm = externalRemesh;
 
     Eigen::VectorXi b;

@@ -7,9 +7,6 @@
 // obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "scaf.h"
-#ifndef LIBIGL_RESTRICTED_TRIANGLE_EXTERNAL
-#include "triangulate.h"
-#endif
 
 #include <igl/writeOBJ.h>
 
@@ -144,6 +141,7 @@ IGL_INLINE void compute_scaffold_gradient_matrix(SCAFData &s,
 IGL_INLINE bool mesh_improve(igl::triangle::SCAFData &s)
 {
   using namespace Eigen;
+
   MatrixXd m_uv = s.w_uv.topRows(s.mv_num);
   MatrixXd V_bnd;
   V_bnd.resize(s.internal_bnd.size(), 2);
@@ -188,88 +186,88 @@ IGL_INLINE bool mesh_improve(igl::triangle::SCAFData &s)
     s.frame_ids = Eigen::VectorXi::LinSpaced(s.rect_frame_V.rows(), s.mv_num, s.mv_num + s.rect_frame_V.rows());
   }
 
-  // Concatenate Vert and Edge
-  MatrixXd V;
-  MatrixXi E;
-  igl::cat(1, V_bnd, s.rect_frame_V, V);
-  E.resize(V.rows(), 2);
-  for (int i = 0; i < E.rows(); i++)
-    E.row(i) << i, i + 1;
-  int acc_bs = 0;
-  for (auto bs : s.bnd_sizes)
-  {
-    E(acc_bs + bs - 1, 1) = acc_bs;
-    acc_bs += bs;
-  }
-  E(V.rows() - 1, 1) = acc_bs;
-  assert(acc_bs == s.internal_bnd.size());
-
-  MatrixXd H = MatrixXd::Zero(s.component_sizes.size(), 2);
-  {
-    int hole_f = 0;
-    int hole_i = 0;
-    for (auto cs : s.component_sizes)
-    {
-      for (int i = 0; i < 3; i++)
-        H.row(hole_i) += m_uv.row(s.m_T(hole_f, i)); // redoing step 2
-      hole_f += cs;
-      hole_i++;
-    }
-  }
-  H /= 3.;
-
-  // remeshing
-  MatrixXd uv2;
-  
   // check for numerical errors
-  if (!V.allFinite())
+  if (!V_bnd.allFinite() || !s.rect_frame_V.allFinite())
   {
       s.re = SCAFRemeshError::NUMERICAL;
       return false;
   }
 
+  SCAFRemeshData scafRemeshData = {};
+
   if(s.rt == SCAFRemeshType::TRIANGLE)
   {
-#ifndef LIBIGL_RESTRICTED_TRIANGLE_EXTERNAL
-      igl::triangle::triangulate(V, E, H, std::basic_string<char>("qYYQ"), uv2, s.s_T);
-#endif
+  
+    // Concatenate Vert and Edge
+    MatrixXd V;
+    MatrixXi E;
+    igl::cat(1, V_bnd, s.rect_frame_V, V);
+    E.resize(V.rows(), 2);
+    for (int i = 0; i < E.rows(); i++)
+        E.row(i) << i, i + 1;
+    int acc_bs = 0;
+    for (auto bs : s.bnd_sizes)
+    {
+        E(acc_bs + bs - 1, 1) = acc_bs;
+        acc_bs += bs;
+    }
+    E(V.rows() - 1, 1) = acc_bs;
+    assert(acc_bs == s.internal_bnd.size());
+
+    MatrixXd H = MatrixXd::Zero(s.component_sizes.size(), 2);
+    {
+        int hole_f = 0;
+        int hole_i = 0;
+        for (auto cs : s.component_sizes)
+        {
+        for (int i = 0; i < 3; i++)
+            H.row(hole_i) += m_uv.row(s.m_T(hole_f, i)); // redoing step 2
+        hole_f += cs;
+        hole_i++;
+        }
+    }
+    H /= 3.;
+
+// #ifndef LIBIGL_RESTRICTED_TRIANGLE_EXTERNAL
+//         igl::triangle::triangulate(V, E, H, std::basic_string<char>("qYYQ"), uv2, s.s_T);
+// #endif
+  
+    // // Save the mesh in OBJ format
+    // static int iter = 0;
+    // iter++;
+    // MatrixXd uv3(uv2.rows(),3);
+    // uv3.col(0) = uv2.col(0);
+    // uv3.col(1) = uv2.col(1);
+    // uv3.col(2).setZero();
+    // igl::writeOBJ("scaf_triangle" + std::to_string(iter) + ".obj", uv3, s.s_T);
+
+    scafRemeshData.V = V;
+    scafRemeshData.E = E;
+    scafRemeshData.H = H;
   }
 
   if(s.rt == SCAFRemeshType::EXTERNAL)
   {
-      igl::triangle::SCAFRemeshData scafRemeshData = {};
-  
-      scafRemeshData.V = V_bnd; 
-      scafRemeshData.E = E;
-      scafRemeshData.H = H;
-      scafRemeshData.S = s.rect_frame_V;
-  
-      bool result = s.rm->remesh(scafRemeshData);
-      
-      if (!result)
-      {
-        s.re = SCAFRemeshError::CDT2D;
-        return false;
-      }
-  
-      uv2 = scafRemeshData.V2;
-      s.s_T = scafRemeshData.F2;
-
+    scafRemeshData.V = V_bnd;
+    scafRemeshData.S = s.rect_frame_V;
   }
 
-  // check remeshing
+  bool result = s.rm->remesh(scafRemeshData);
+  
+  if (!result)
+  {
+    s.re = SCAFRemeshError::CDT2D;
+    return false;
+  }
+  
+  MatrixXd uv2 = scafRemeshData.V2;
+  s.s_T = scafRemeshData.F2;
+
   if(!uv2.rows())
   {
       s.re = SCAFRemeshError::NODATA;
       return false;
   }
-
-  // Save the mesh in OBJ format
-  MatrixXd uv3(uv2.rows(),3);
-  uv3.col(0) = uv2.col(0);
-  uv3.col(1) = uv2.col(1);
-  uv3.col(2).setZero();
-  igl::writeOBJ("scaf.obj", uv3, s.s_T);
 
   auto bnd_n = s.internal_bnd.size();
 

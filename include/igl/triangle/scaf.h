@@ -24,16 +24,9 @@ namespace igl
 
     enum class SCAFRemeshType
     {
+        NONE,
         TRIANGLE,
         EXTERNAL,
-    };
-
-    enum class SCAFRemeshError
-    {
-        NONE,
-        NUMERICAL,
-        CDT2D,
-        NODATA,
     };
 
     struct SCAFRemeshData
@@ -51,6 +44,14 @@ namespace igl
         {
             return true;
         };
+    };
+
+    enum class SCAFRemeshError
+    {
+        NONE,
+        NUMERICAL,
+        CDT2D,
+        NODATA,
     };
 
     struct SCAFData
@@ -98,10 +99,10 @@ namespace igl
       Eigen::SparseMatrix<double> Dx_m, Dy_m, Dz_m;
       Eigen::MatrixXd Ri_m, Ji_m, Ri_s, Ji_s;
       Eigen::MatrixXd W_m, W_s;
-      
-      // remesher type
+
+      // remesh type
       SCAFRemeshType rt;
-            
+      
       // remesh function
       std::shared_ptr<SCAFRemesh> rm;
       
