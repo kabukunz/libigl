@@ -228,25 +228,12 @@ IGL_INLINE bool mesh_improve(igl::triangle::SCAFData &s)
     }
     H /= 3.;
 
-// #ifndef LIBIGL_RESTRICTED_TRIANGLE_EXTERNAL
-//         igl::triangle::triangulate(V, E, H, std::basic_string<char>("qYYQ"), uv2, s.s_T);
-// #endif
-  
-    // // Save the mesh in OBJ format
-    // static int iter = 0;
-    // iter++;
-    // MatrixXd uv3(uv2.rows(),3);
-    // uv3.col(0) = uv2.col(0);
-    // uv3.col(1) = uv2.col(1);
-    // uv3.col(2).setZero();
-    // igl::writeOBJ("scaf_triangle" + std::to_string(iter) + ".obj", uv3, s.s_T);
-
     scafRemeshData.V = V;
     scafRemeshData.E = E;
     scafRemeshData.H = H;
   }
 
-  if(s.rt == SCAFRemeshType::EXTERNAL)
+  if(s.rt == SCAFRemeshType::OTHER)
   {
     scafRemeshData.V = V_bnd;
     scafRemeshData.S = s.rect_frame_V;
@@ -259,15 +246,15 @@ IGL_INLINE bool mesh_improve(igl::triangle::SCAFData &s)
     s.re = SCAFRemeshError::CDT2D;
     return false;
   }
-  
-  MatrixXd uv2 = scafRemeshData.V2;
-  s.s_T = scafRemeshData.F2;
 
-  if(!uv2.rows())
+  if(!scafRemeshData.V2.rows())
   {
       s.re = SCAFRemeshError::NODATA;
       return false;
   }
+  
+  MatrixXd uv2 = scafRemeshData.V2;
+  s.s_T = scafRemeshData.F2;
 
   auto bnd_n = s.internal_bnd.size();
 
