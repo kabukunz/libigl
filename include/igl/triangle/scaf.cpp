@@ -253,9 +253,6 @@ IGL_INLINE bool mesh_improve(igl::triangle::SCAFData &s)
       return false;
   }
   
-  MatrixXd uv2 = scafRemeshData.V2; 
-  s.s_T = scafRemeshData.F2;
-  
   MatrixXd uv2 = scafRemeshData.V2;
   s.s_T = scafRemeshData.F2;
 
