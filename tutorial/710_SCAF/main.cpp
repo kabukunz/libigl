@@ -39,7 +39,7 @@ struct SCAFRemesh : igl::triangle::SCAFRemesh
             igl::triangle::triangulate(V, E, H, std::basic_string<char>("qYYQ"), V2, F2);
         }
 
-        if (scaf_data.rt == igl::triangle::SCAFRemeshType::EXTERNAL)
+        if (scaf_data.rt == igl::triangle::SCAFRemeshType::OTHERS)
         {
             std::cout << "DONE!" << std::endl;
         }
@@ -58,8 +58,8 @@ bool key_down(igl::opengl::glfw::Viewer &viewer, unsigned char key, int modifier
     {
         if (scaf_data.rt == igl::triangle::SCAFRemeshType::TRIANGLE)
         {
-            scaf_data.rt = igl::triangle::SCAFRemeshType::EXTERNAL;
-            std::cout << "remesh: external" << std::endl;
+            scaf_data.rt = igl::triangle::SCAFRemeshType::OTHERS;
+            std::cout << "remesh: others" << std::endl;
         }
         else
         {
@@ -180,7 +180,7 @@ int main(int argc, char *argv[])
 
     std::cerr << "Press space for running an iteration." << std::endl;
     std::cerr << "Press 1 for Mesh 2 for UV" << std::endl;
-    std::cerr << "Press 3 to switch to external remesh" << std::endl;
+    std::cerr << "Press 3 to switch to others remesh" << std::endl;
 
     // Launch the viewer
     viewer.launch();

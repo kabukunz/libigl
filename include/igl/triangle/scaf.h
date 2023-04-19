@@ -26,7 +26,7 @@ namespace igl
     {
         NONE,
         TRIANGLE,
-        EXTERNAL,
+        OTHERS,
     };
 
     struct SCAFRemeshData
