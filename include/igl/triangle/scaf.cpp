@@ -233,7 +233,7 @@ IGL_INLINE bool mesh_improve(igl::triangle::SCAFData &s)
     scafRemeshData.H = H;
   }
 
-  if(s.rt == SCAFRemeshType::OTHER)
+  if(s.rt == SCAFRemeshType::OTHERS)
   {
     scafRemeshData.V = V_bnd;
     scafRemeshData.S = s.rect_frame_V;
@@ -252,6 +252,9 @@ IGL_INLINE bool mesh_improve(igl::triangle::SCAFData &s)
       s.re = SCAFRemeshError::NODATA;
       return false;
   }
+  
+  MatrixXd uv2 = scafRemeshData.V2;
+  s.s_T = scafRemeshData.F2;
   
   MatrixXd uv2 = scafRemeshData.V2;
   s.s_T = scafRemeshData.F2;
