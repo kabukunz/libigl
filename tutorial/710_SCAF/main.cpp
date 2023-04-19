@@ -161,7 +161,7 @@ int main(int argc, char *argv[])
 
     if (!igl::triangle::scaf_precompute(V, F, uv_init, scaf_data, igl::MappingEnergyType::SYMMETRIC_DIRICHLET, b, bc, 0))
     {
-        std::cerr << "precompute failed!" << std::endl;
+        std::cerr << "precompute failed!" << std::endl; 
         return EXIT_FAILURE;
     }
 
