@@ -193,10 +193,10 @@ IGL_INLINE bool mesh_improve(igl::triangle::SCAFData &s)
 //       return false;
 //   }
 
-  SCAFRemeshData scafRemeshData = {};
+    SCAFRemeshData scafRemeshData = {};
 
-  if(s.rt == SCAFRemeshType::TRIANGLE)
-  {
+//   if(s.rt == SCAFRemeshType::TRIANGLE)
+//   {
   
     // Concatenate Vert and Edge
     MatrixXd V;
@@ -231,13 +231,16 @@ IGL_INLINE bool mesh_improve(igl::triangle::SCAFData &s)
     scafRemeshData.V = V;
     scafRemeshData.E = E;
     scafRemeshData.H = H;
-  }
+//   }
 
-  if(s.rt == SCAFRemeshType::OTHERS)
-  {
-    scafRemeshData.V = V_bnd;
-    scafRemeshData.S = s.rect_frame_V;
-  }
+//   if(s.rt == SCAFRemeshType::OTHERS)
+//   {
+    // scafRemeshData.V = V_bnd;
+    // scafRemeshData.S = s.rect_frame_V;
+
+//     scafRemeshData.V = V;
+//     scafRemeshData.E = E;
+//   }
 
   if(!s.rm->remesh(scafRemeshData))
     return false;
@@ -593,7 +596,7 @@ IGL_INLINE void build_weighted_arap_system(SCAFData &s, Eigen::SparseMatrix<doub
 
 if (!rhs_m.allFinite() || !rhs_s.allFinite())
 {
-    bool tmp=false;
+    sleep(0);
 }
 
   L = L_m + L_s;
@@ -616,7 +619,7 @@ IGL_INLINE void solve_weighted_arap(SCAFData &s, Eigen::MatrixXd &uv)
 
 if (!bnd_ids.allFinite())
 {
-    bool tmp=false;
+    sleep(0);
 }
 
   const auto v_n = s.v_num;
@@ -627,7 +630,7 @@ if (!bnd_ids.allFinite())
 
 if (!bnd_pos.allFinite())
 {
-    bool tmp=false;
+    sleep(0);
 }
 
   ArrayXi known_ids(bnd_n * dim);
@@ -637,7 +640,7 @@ if (!bnd_pos.allFinite())
 
 if (!unknown_ids.allFinite())
 {
-    bool tmp=false;
+    sleep(0);
 }
 
   VectorXd known_pos(bnd_ids.size() * dim);
@@ -652,7 +655,7 @@ if (!unknown_ids.allFinite())
 
 if (!unknown_ids.allFinite() || !known_ids.allFinite() || !known_pos.allFinite())
 {
-    bool tmp=false;
+    sleep(0);
 }
 
   Eigen::SparseMatrix<double> L;
@@ -661,7 +664,7 @@ if (!unknown_ids.allFinite() || !known_ids.allFinite() || !known_pos.allFinite()
 
 if (!rhs.allFinite())
 {
-    bool tmp=false;
+    sleep(0);
 }
 
   Eigen::VectorXd unknown_Uc((v_n - s.frame_ids.size() - s.fixed_ids.size()) * dim), Uc(dim * v_n);
@@ -671,7 +674,7 @@ if (!rhs.allFinite())
 
 if (!unknown_Uc.allFinite())
 {
-    bool tmp=false;
+    sleep(0);
 }
 
   igl::slice_into(unknown_Uc, unknown_ids.matrix(), 1, Uc);
@@ -679,14 +682,14 @@ if (!unknown_Uc.allFinite())
 
 if (!Uc.allFinite())
 {
-    bool tmp=false;
+    sleep(0);
 }
 
   uv = Map<Matrix<double, -1, -1, Eigen::ColMajor>>(Uc.data(), v_n, dim);
 
 if (!uv.allFinite())
 {
-    bool tmp=false;
+    sleep(0);
 }
 
 }
@@ -697,35 +700,35 @@ IGL_INLINE double perform_iteration(SCAFData &s)
 
 if (!s.w_uv.allFinite())
 {
-    bool tmp=false;
+    sleep(0);
 }
 
   compute_jacobians(s, V_out, true);
 
 if (!V_out.allFinite())
 {
-    bool tmp=false;
+    sleep(0);
 }
 
   igl::slim_update_weights_and_closest_rotations_with_jacobians(s.Ji_m, s.slim_energy, 0, s.W_m, s.Ri_m);
 
 if (!s.W_m.allFinite())
 {
-    bool tmp=false;
+    sleep(0);
 }
 
   igl::slim_update_weights_and_closest_rotations_with_jacobians(s.Ji_s, s.scaf_energy, 0, s.W_s, s.Ri_s);
 
 if (!s.W_s.allFinite())
 {
-    bool tmp=false;
+    sleep(0);
 }
 
   solve_weighted_arap(s, V_out);
 
 if (!V_out.allFinite())
 {
-    bool tmp=false;
+    sleep(0);
 }
 
   std::function<double(Eigen::MatrixXd&)> whole_E = [&s](Eigen::MatrixXd &uv) { return compute_energy(s, uv, true); };
@@ -738,7 +741,7 @@ if (!V_out.allFinite())
 
 if (!w_T.allFinite())
 {
-    bool tmp=false;
+    sleep(0);
 }
 
   double val = igl::flip_avoiding_line_search( w_T, s.w_uv, V_out, whole_E, -1) /
@@ -746,7 +749,7 @@ if (!w_T.allFinite())
 
 if (!s.w_uv.allFinite())
 {
-    bool tmp=false;
+    sleep(0);
 }
   return val;
     
@@ -836,7 +839,7 @@ IGL_INLINE bool igl::triangle::scaf_solve(igl::triangle::SCAFData &s, int iter_n
 
 if (!s.w_uv.allFinite())
 {
-    bool tmp=false;
+    sleep(0);
 }
 
     s.total_energy = igl::triangle::scaf::compute_energy(s, s.w_uv, true) / s.mesh_measure;
@@ -844,7 +847,7 @@ if (!s.w_uv.allFinite())
 
 if (!s.w_uv.allFinite())
 {
-    bool tmp=false;
+    sleep(0);
 }
 
     if(!igl::triangle::scaf::mesh_improve(s))
@@ -852,7 +855,7 @@ if (!s.w_uv.allFinite())
 
 if (!s.w_uv.allFinite())
 {
-    bool tmp=false;
+    sleep(0);
 }
 
     double new_weight = s.mesh_measure * s.energy / (s.sf_num * 100);
@@ -860,21 +863,21 @@ if (!s.w_uv.allFinite())
 
 if (!s.w_uv.allFinite())
 {
-    bool tmp=false;
+    sleep(0);
 }
 
     igl::triangle::scaf::update_scaffold(s);
 
 if (!s.w_uv.allFinite())
 {
-    bool tmp=false;
+    sleep(0);
 }
 
     s.total_energy = igl::triangle::scaf::perform_iteration(s);
 
 if (!s.w_uv.allFinite())
 {
-    bool tmp=false;
+    sleep(0);
 }
 
     s.energy =
@@ -882,7 +885,7 @@ if (!s.w_uv.allFinite())
 
 if (!s.w_uv.allFinite())
 {
-    bool tmp=false;
+    sleep(0);
 }
 
   }
