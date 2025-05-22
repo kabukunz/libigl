@@ -597,11 +597,6 @@ IGL_INLINE void build_weighted_arap_system(SCAFData &s, Eigen::SparseMatrix<doub
   build_surface_linear_system(s, L_m, rhs_m);  // complete Am, with soft
   build_scaffold_linear_system(s, L_s, rhs_s); // complete As, without proximal
 
-if (!rhs_m.allFinite() || !rhs_s.allFinite())
-{
-    bool tmp;
-}
-
   L = L_m + L_s;
   rhs = rhs_m + rhs_s;
   L.makeCompressed();
@@ -613,17 +608,8 @@ IGL_INLINE void solve_weighted_arap(SCAFData &s, Eigen::MatrixXd &uv)
   using namespace std;
   int dim = s.dim;
 
-//   what's this?
-//   igl::Timer timer;
-//   timer.start();
-
   VectorXi bnd_ids;
   igl::cat(1, s.fixed_ids, s.frame_ids, bnd_ids);
-
-if (!bnd_ids.allFinite())
-{
-    bool tmp;
-}
 
   const auto v_n = s.v_num;
   const auto bnd_n = bnd_ids.size();
@@ -631,20 +617,10 @@ if (!bnd_ids.allFinite())
   MatrixXd bnd_pos;
   igl::slice(s.w_uv, bnd_ids, 1, bnd_pos);
 
-if (!bnd_pos.allFinite())
-{
-    bool tmp;
-}
-
   ArrayXi known_ids(bnd_n * dim);
   ArrayXi unknown_ids((v_n - bnd_n) * dim);
 
   get_complement(bnd_ids, v_n, unknown_ids);
-
-if (!unknown_ids.allFinite())
-{
-    bool tmp;
-}
 
   VectorXd known_pos(bnd_ids.size() * dim);
   for (int d = 0; d < dim; d++)
@@ -656,83 +632,32 @@ if (!unknown_ids.allFinite())
         unknown_ids.topRows(v_n - n_b) + d * v_n;
   }
 
-if (!unknown_ids.allFinite() || !known_ids.allFinite() || !known_pos.allFinite())
-{
-    bool tmp;
-}
-
   Eigen::SparseMatrix<double> L;
   Eigen::VectorXd rhs;
   build_weighted_arap_system(s, L, rhs);
-
-if (!rhs.allFinite())
-{
-    bool tmp;
-}
 
   Eigen::VectorXd unknown_Uc((v_n - s.frame_ids.size() - s.fixed_ids.size()) * dim), Uc(dim * v_n);
 
   SimplicialLDLT<Eigen::SparseMatrix<double>> solver;
   unknown_Uc = solver.compute(L).solve(rhs);
 
-if (!unknown_Uc.allFinite())
-{
-    bool tmp;
-}
-
   igl::slice_into(unknown_Uc, unknown_ids.matrix(), 1, Uc);
   igl::slice_into(known_pos, known_ids.matrix(), 1, Uc);
 
-if (!Uc.allFinite())
-{
-    bool tmp;
-}
-
   uv = Map<Matrix<double, -1, -1, Eigen::ColMajor>>(Uc.data(), v_n, dim);
-
-if (!uv.allFinite())
-{
-    bool tmp;
-}
-
 }
 
 IGL_INLINE double perform_iteration(SCAFData &s)
 {
   Eigen::MatrixXd V_out = s.w_uv;
 
-if (!s.w_uv.allFinite())
-{
-    bool tmp;
-}
-
   compute_jacobians(s, V_out, true);
-
-if (!V_out.allFinite())
-{
-    bool tmp;
-}
 
   igl::slim_update_weights_and_closest_rotations_with_jacobians(s.Ji_m, s.slim_energy, 0, s.W_m, s.Ri_m);
 
-if (!s.W_m.allFinite())
-{
-    bool tmp;
-}
-
   igl::slim_update_weights_and_closest_rotations_with_jacobians(s.Ji_s, s.scaf_energy, 0, s.W_s, s.Ri_s);
 
-if (!s.W_s.allFinite())
-{
-    bool tmp;
-}
-
   solve_weighted_arap(s, V_out);
-
-if (!V_out.allFinite())
-{
-    bool tmp;
-}
 
   std::function<double(Eigen::MatrixXd&)> whole_E = [&s](Eigen::MatrixXd &uv) { return compute_energy(s, uv, true); };
 
@@ -742,20 +667,10 @@ if (!V_out.allFinite())
   else
     w_T = s.s_T;
 
-if (!w_T.allFinite())
-{
-    bool tmp;
-}
-
   double val = igl::flip_avoiding_line_search( w_T, s.w_uv, V_out, whole_E, -1) /
     s.mesh_measure;
 
-if (!s.w_uv.allFinite())
-{
-    bool tmp;
-}
-  return val;
-    
+  return val;    
 }
 
 }
@@ -840,57 +755,21 @@ IGL_INLINE bool igl::triangle::scaf_solve(igl::triangle::SCAFData &s, int iter_n
   for (int it = 0; it < iter_num; it++)
   {
 
-if (!s.w_uv.allFinite())
-{
-    bool tmp;
-}
-
     s.total_energy = igl::triangle::scaf::compute_energy(s, s.w_uv, true) / s.mesh_measure;
     s.rect_frame_V = Eigen::MatrixXd();
-
-if (!s.w_uv.allFinite())
-{
-    bool tmp;
-}
 
     if(!igl::triangle::scaf::mesh_improve(s))
         return false;
 
-if (!s.w_uv.allFinite())
-{
-    bool tmp;
-}
-
     double new_weight = s.mesh_measure * s.energy / (s.sf_num * 100);
     s.scaffold_factor = new_weight;
 
-if (!s.w_uv.allFinite())
-{
-    bool tmp;
-}
-
     igl::triangle::scaf::update_scaffold(s);
-
-if (!s.w_uv.allFinite())
-{
-    bool tmp;
-}
 
     s.total_energy = igl::triangle::scaf::perform_iteration(s);
 
-if (!s.w_uv.allFinite())
-{
-    bool tmp;
-}
-
     s.energy =
         igl::triangle::scaf::compute_energy(s, s.w_uv, false) / s.mesh_measure;
-
-if (!s.w_uv.allFinite())
-{
-    bool tmp;
-}
-
   }
 
   // return s.w_uv.topRows(s.mv_num);
