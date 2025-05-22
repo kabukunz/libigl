@@ -186,79 +186,47 @@ IGL_INLINE bool mesh_improve(igl::triangle::SCAFData &s)
     s.frame_ids = Eigen::VectorXi::LinSpaced(s.rect_frame_V.rows(), s.mv_num, s.mv_num + s.rect_frame_V.rows());
   }
 
-//   // check for numerical errors
-//   if (!V_bnd.allFinite() || !s.rect_frame_V.allFinite())
-//   {
-//       s.re = SCAFRemeshError::NUMERICAL;
-//       return false;
-//   }
+  SCAFRemeshData scafRemeshData = {};
 
-    SCAFRemeshData scafRemeshData = {};
+  // Concatenate Vert and Edge
+  MatrixXd V;
+  MatrixXi E;
+  igl::cat(1, V_bnd, s.rect_frame_V, V);
+  E.resize(V.rows(), 2);
+  for (int i = 0; i < E.rows(); i++)
+      E.row(i) << i, i + 1;
+  int acc_bs = 0;
+  for (auto bs : s.bnd_sizes)
+  {
+      E(acc_bs + bs - 1, 1) = acc_bs;
+      acc_bs += bs;
+  }
+  E(V.rows() - 1, 1) = acc_bs;
+  assert(acc_bs == s.internal_bnd.size());
 
-//   if(s.rt == SCAFRemeshType::TRIANGLE)
-//   {
-  
-    // Concatenate Vert and Edge
-    MatrixXd V;
-    MatrixXi E;
-    igl::cat(1, V_bnd, s.rect_frame_V, V);
-    E.resize(V.rows(), 2);
-    for (int i = 0; i < E.rows(); i++)
-        E.row(i) << i, i + 1;
-    int acc_bs = 0;
-    for (auto bs : s.bnd_sizes)
+  MatrixXd H = MatrixXd::Zero(s.component_sizes.size(), 2);
+  {
+    int hole_f = 0;
+    int hole_i = 0;
+    for (auto cs : s.component_sizes)
     {
-        E(acc_bs + bs - 1, 1) = acc_bs;
-        acc_bs += bs;
+    for (int i = 0; i < 3; i++)
+        H.row(hole_i) += m_uv.row(s.m_T(hole_f, i)); // redoing step 2
+    hole_f += cs;
+    hole_i++;
     }
-    E(V.rows() - 1, 1) = acc_bs;
-    assert(acc_bs == s.internal_bnd.size());
+  }
+  H /= 3.;
 
-    MatrixXd H = MatrixXd::Zero(s.component_sizes.size(), 2);
-    {
-        int hole_f = 0;
-        int hole_i = 0;
-        for (auto cs : s.component_sizes)
-        {
-        for (int i = 0; i < 3; i++)
-            H.row(hole_i) += m_uv.row(s.m_T(hole_f, i)); // redoing step 2
-        hole_f += cs;
-        hole_i++;
-        }
-    }
-    H /= 3.;
+  MatrixXi F = s.s_T;
 
-    MatrixXi F = s.s_T;
-
-    scafRemeshData.V = V;
-    scafRemeshData.E = E;
-    scafRemeshData.H = H;
-    scafRemeshData.F = F;
-//   }
-
-//   if(s.rt == SCAFRemeshType::OTHERS)
-//   {
-    // scafRemeshData.V = V_bnd;
-    // scafRemeshData.S = s.rect_frame_V;
-
-//     scafRemeshData.V = V;
-//     scafRemeshData.E = E;
-//   }
+  scafRemeshData.V = V;
+  scafRemeshData.E = E;
+  scafRemeshData.H = H;
+  scafRemeshData.F = F;
 
   if(!s.rm->remesh(scafRemeshData))
     return false;
-  
-//   if (!result)
-//   {
-//     s.re = SCAFRemeshError::CDT2D;
-//     return false;
-//   }
-
-//   if(!scafRemeshData.V2.rows())
-//   {
-//       s.re = SCAFRemeshError::NODATA;
-//       return false;
-//   }
   
   MatrixXd uv2 = scafRemeshData.V2;
   s.s_T = scafRemeshData.F2;

@@ -26,7 +26,7 @@ namespace igl
     {
         NONE,
         TRIANGLE,
-        OTHERS,
+        EXTERNAL,
     };
 
     struct SCAFRemeshData
@@ -44,14 +44,6 @@ namespace igl
         {
             return true;
         };
-    };
-
-    enum class SCAFRemeshError
-    {
-        NONE,
-        NUMERICAL,
-        CDT2D,
-        NODATA,
     };
 
     struct SCAFData
@@ -105,9 +97,6 @@ namespace igl
       
       // remesh function
       std::shared_ptr<SCAFRemesh> rm;
-      
-      // errors
-      SCAFRemeshError re;
     };
 
 

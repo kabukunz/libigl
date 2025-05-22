@@ -39,7 +39,7 @@ struct SCAFRemesh : igl::triangle::SCAFRemesh
             igl::triangle::triangulate(V, E, H, std::basic_string<char>("qYYQ"), V2, F2);
         }
 
-        if (scaf_data.rt == igl::triangle::SCAFRemeshType::OTHERS)
+        if (scaf_data.rt == igl::triangle::SCAFRemeshType::EXTERNAL)
         {
             std::cout << "DONE!" << std::endl;
         }
@@ -58,7 +58,7 @@ bool key_down(igl::opengl::glfw::Viewer &viewer, unsigned char key, int modifier
     {
         if (scaf_data.rt == igl::triangle::SCAFRemeshType::TRIANGLE)
         {
-            scaf_data.rt = igl::triangle::SCAFRemeshType::OTHERS;
+            scaf_data.rt = igl::triangle::SCAFRemeshType::EXTERNAL;
             std::cout << "remesh: others" << std::endl;
         }
         else
