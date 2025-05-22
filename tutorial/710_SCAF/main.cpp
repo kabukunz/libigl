@@ -30,7 +30,6 @@ struct SCAFRemesh : igl::triangle::SCAFRemesh
         auto &V = scafRemeshData.V;
         auto &E = scafRemeshData.E;
         auto &H = scafRemeshData.H;
-        auto &S = scafRemeshData.S;
         auto &V2 = scafRemeshData.V2;
         auto &F2 = scafRemeshData.F2;
 
@@ -180,7 +179,7 @@ int main(int argc, char *argv[])
 
     std::cerr << "Press space for running an iteration." << std::endl;
     std::cerr << "Press 1 for Mesh 2 for UV" << std::endl;
-    std::cerr << "Press 3 to switch to others remesh" << std::endl;
+    std::cerr << "Press 3 to switch to external remesh" << std::endl;
 
     // Launch the viewer
     viewer.launch();

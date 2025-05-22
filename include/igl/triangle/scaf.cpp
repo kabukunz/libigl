@@ -218,12 +218,9 @@ IGL_INLINE bool mesh_improve(igl::triangle::SCAFData &s)
   }
   H /= 3.;
 
-  MatrixXi F = s.s_T;
-
   scafRemeshData.V = V;
   scafRemeshData.E = E;
   scafRemeshData.H = H;
-  scafRemeshData.F = F;
 
   if(!s.rm->remesh(scafRemeshData))
     return false;
