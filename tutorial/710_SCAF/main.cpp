@@ -1,4 +1,5 @@
 #include <igl/triangle/scaf.h>
+#include <igl/triangle/triangulate.h>
 #include <igl/arap.h>
 #include <igl/boundary_loop.h>
 #include <igl/harmonic.h>
@@ -12,7 +13,6 @@
 #include <igl/flipped_triangles.h>
 #include <igl/topological_hole_fill.h>
 
-
 Eigen::MatrixXd V;
 Eigen::MatrixXi F;
 Eigen::MatrixXd V_uv;
@@ -22,105 +22,165 @@ igl::triangle::SCAFData scaf_data;
 bool show_uv = false;
 float uv_scale = 0.2f;
 
-bool key_down(igl::opengl::glfw::Viewer& viewer, unsigned char key, int modifier)
+// external remesher
+struct SCAFRemesh : igl::triangle::SCAFRemesh
 {
-  if (key == '1')
-    show_uv = false;
-  else if (key == '2')
-    show_uv = true;
+    bool remesh(igl::triangle::SCAFRemeshData &scafRemeshData) override
+    {
+        auto &V = scafRemeshData.V;
+        auto &E = scafRemeshData.E;
+        auto &H = scafRemeshData.H;
+        auto &V2 = scafRemeshData.V2;
+        auto &F2 = scafRemeshData.F2;
 
-  if (key == ' ')
-  {
-    timer.start();
-    igl::triangle::scaf_solve(scaf_data, 1);
-    std::cout << "time = " << timer.getElapsedTime() << std::endl;
-  }
+        if (scaf_data.rt == igl::triangle::SCAFRemeshType::TRIANGLE)
+        {
+            igl::triangle::triangulate(V, E, H, std::basic_string<char>("qYYQ"), V2, F2);
+        }
 
-  const auto& V_uv = uv_scale * scaf_data.w_uv.topRows(V.rows());
-  if (show_uv)
-  {
-    viewer.data().clear();
-    viewer.data().set_mesh(V_uv,F);
-    viewer.data().set_uv(V_uv);
-    viewer.core().align_camera_center(V_uv,F);
-  }
-  else
-  {
-    viewer.data().set_mesh(V,F);
-    viewer.data().set_uv(V_uv);
-    viewer.core().align_camera_center(V,F);
-  }
+        if (scaf_data.rt == igl::triangle::SCAFRemeshType::EXTERNAL)
+        {
+            std::cout << "DONE!" << std::endl;
+        }
 
-  viewer.data().compute_normals();
+        return true;
+    }
+};
 
-  return false;
+bool key_down(igl::opengl::glfw::Viewer &viewer, unsigned char key, int modifier)
+{
+    if (key == '1')
+        show_uv = false;
+    else if (key == '2')
+        show_uv = true;
+    else if (key == '3')
+    {
+        if (scaf_data.rt == igl::triangle::SCAFRemeshType::TRIANGLE)
+        {
+            scaf_data.rt = igl::triangle::SCAFRemeshType::EXTERNAL;
+            std::cout << "remesh: external" << std::endl;
+        }
+        else
+        {
+            scaf_data.rt = igl::triangle::SCAFRemeshType::TRIANGLE;
+            std::cout << "remesh: Triangle" << std::endl;
+        }
+    }
+
+    if (key == ' ')
+    {
+        timer.start();
+
+        if (!igl::triangle::scaf_solve(scaf_data, 1))
+        {
+            std::cerr << "solve failed!" << std::endl;
+            return EXIT_FAILURE;
+        }
+
+        std::cout << "time = " << timer.getElapsedTime() << std::endl;
+    }
+
+    const auto &V_uv = uv_scale * scaf_data.w_uv.topRows(V.rows());
+    if (show_uv)
+    {
+        viewer.data().clear();
+        viewer.data().set_mesh(V_uv, F);
+        viewer.data().set_uv(V_uv);
+        viewer.core().align_camera_center(V_uv, F);
+    }
+    else
+    {
+        viewer.data().set_mesh(V, F);
+        viewer.data().set_uv(V_uv);
+        viewer.core().align_camera_center(V, F);
+    }
+
+    viewer.data().compute_normals();
+
+    return false;
 }
 
 int main(int argc, char *argv[])
 {
-  using namespace std;
-  // Load a mesh in OFF format
-  igl::readOBJ(TUTORIAL_SHARED_PATH "/camel_b.obj", V, F);
+    using namespace std;
+    // Load a mesh in OFF format
+    igl::readOBJ(TUTORIAL_SHARED_PATH "/camel_b.obj", V, F);
 
-  Eigen::MatrixXd bnd_uv, uv_init;
+    Eigen::MatrixXd bnd_uv, uv_init;
 
-  Eigen::VectorXd M;
-  igl::doublearea(V, F, M);
-  std::vector<std::vector<int>> all_bnds;
-  igl::boundary_loop(F, all_bnds);
+    Eigen::VectorXd M;
+    igl::doublearea(V, F, M);
+    std::vector<std::vector<int>> all_bnds;
+    igl::boundary_loop(F, all_bnds);
 
-  // Heuristic primary boundary choice: longest
-  auto primary_bnd = std::max_element(all_bnds.begin(), all_bnds.end(), [](const std::vector<int> &a, const std::vector<int> &b) { return a.size()<b.size(); });
+    // Heuristic primary boundary choice: longest
+    auto primary_bnd = std::max_element(all_bnds.begin(), all_bnds.end(),
+                                        [](const std::vector<int> &a, const std::vector<int> &b)
+                                        { return a.size() < b.size(); });
 
-  Eigen::VectorXi bnd = Eigen::Map<Eigen::VectorXi>(primary_bnd->data(), primary_bnd->size());
+    Eigen::VectorXi bnd = Eigen::Map<Eigen::VectorXi>(primary_bnd->data(), primary_bnd->size());
 
-  igl::map_vertices_to_circle(V, bnd, bnd_uv);
-  bnd_uv *= sqrt(M.sum() / (2 * igl::PI));
-  if (all_bnds.size() == 1)
-  {
-    if (bnd.rows() == V.rows()) // case: all vertex on boundary
+    igl::map_vertices_to_circle(V, bnd, bnd_uv);
+    bnd_uv *= sqrt(M.sum() / (2 * igl::PI));
+    if (all_bnds.size() == 1)
     {
-      uv_init.resize(V.rows(), 2);
-      for (int i = 0; i < bnd.rows(); i++)
-        uv_init.row(bnd(i)) = bnd_uv.row(i);
+        if (bnd.rows() == V.rows()) // case: all vertex on boundary
+        {
+            uv_init.resize(V.rows(), 2);
+            for (int i = 0; i < bnd.rows(); i++)
+                uv_init.row(bnd(i)) = bnd_uv.row(i);
+        }
+        else
+        {
+            igl::harmonic(V, F, bnd, bnd_uv, 1, uv_init);
+            if (igl::flipped_triangles(uv_init, F).size() != 0)
+                igl::harmonic(F, bnd, bnd_uv, 1, uv_init); // fallback uniform laplacian
+        }
     }
     else
     {
-      igl::harmonic(V, F, bnd, bnd_uv, 1, uv_init);
-      if (igl::flipped_triangles(uv_init, F).size() != 0)
-        igl::harmonic(F, bnd, bnd_uv, 1, uv_init); // fallback uniform laplacian
+        // if there is a hole, fill it and erase additional vertices.
+        all_bnds.erase(primary_bnd);
+        Eigen::MatrixXi F_filled;
+        igl::topological_hole_fill(F, bnd, all_bnds, F_filled);
+        igl::harmonic(F_filled, bnd, bnd_uv, 1, uv_init);
+        uv_init.conservativeResize(V.rows(), 2);
     }
-  }
-  else
-  {
-    // if there is a hole, fill it and erase additional vertices.
-    all_bnds.erase(primary_bnd);
-    Eigen::MatrixXi F_filled;
-    igl::topological_hole_fill(F, bnd, all_bnds, F_filled);
-    igl::harmonic(F_filled, bnd, bnd_uv ,1, uv_init);
-    uv_init.conservativeResize(V.rows(), 2);
-  }
 
-  Eigen::VectorXi b; Eigen::MatrixXd bc;
-  igl::triangle::scaf_precompute(V, F, uv_init, scaf_data, igl::MappingEnergyType::SYMMETRIC_DIRICHLET, b, bc, 0);
+    scaf_data = {};
+    scaf_data.rt = igl::triangle::SCAFRemeshType::TRIANGLE;
 
-  // Plot the mesh
-  igl::opengl::glfw::Viewer viewer;
-  viewer.data().set_mesh(V, F);
-  const auto& V_uv = uv_scale * scaf_data.w_uv.topRows(V.rows());
-  viewer.data().set_uv(V_uv);
-  viewer.callback_key_down = &key_down;
+    std::shared_ptr<SCAFRemesh> scafRemesh = std::make_shared<SCAFRemesh>();
+    std::shared_ptr<igl::triangle::SCAFRemesh> externalRemesh = std::dynamic_pointer_cast<SCAFRemesh>(scafRemesh);
+    ;
+    scaf_data.rm = externalRemesh;
 
-  // Enable wireframe
-  viewer.data().show_lines = true;
+    Eigen::VectorXi b;
+    Eigen::MatrixXd bc;
 
-  // Draw checkerboard texture
-  viewer.data().show_texture = true;
+    if (!igl::triangle::scaf_precompute(V, F, uv_init, scaf_data, igl::MappingEnergyType::SYMMETRIC_DIRICHLET, b, bc, 0))
+    {
+        std::cerr << "precompute failed!" << std::endl; 
+        return EXIT_FAILURE;
+    }
 
+    // Plot the mesh
+    igl::opengl::glfw::Viewer viewer;
+    viewer.data().set_mesh(V, F);
+    const auto &V_uv = uv_scale * scaf_data.w_uv.topRows(V.rows());
+    viewer.data().set_uv(V_uv);
+    viewer.callback_key_down = &key_down;
 
-  std::cerr << "Press space for running an iteration." << std::endl;
-  std::cerr << "Press 1 for Mesh 2 for UV" << std::endl;
+    // Enable wireframe
+    viewer.data().show_lines = true;
 
-  // Launch the viewer
-  viewer.launch();
+    // Draw checkerboard texture
+    viewer.data().show_texture = true;
+
+    std::cerr << "Press space for running an iteration." << std::endl;
+    std::cerr << "Press 1 for Mesh 2 for UV" << std::endl;
+    std::cerr << "Press 3 to switch to external remesh" << std::endl;
+
+    // Launch the viewer
+    viewer.launch();
 }
