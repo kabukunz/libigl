@@ -58,7 +58,7 @@ bool key_down(igl::opengl::glfw::Viewer &viewer, unsigned char key, int modifier
         if (scaf_data.rt == igl::triangle::SCAFRemeshType::TRIANGLE)
         {
             scaf_data.rt = igl::triangle::SCAFRemeshType::EXTERNAL;
-            std::cout << "remesh: others" << std::endl;
+            std::cout << "remesh: external" << std::endl;
         }
         else
         {
@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
 {
     using namespace std;
     // Load a mesh in OFF format
-    igl::readOBJ(TUTORIAL_SHARED_PATH "/hemisphere-low1_qd2t.obj", V, F);
+    igl::readOBJ(TUTORIAL_SHARED_PATH "/camel_b.obj", V, F);
 
     Eigen::MatrixXd bnd_uv, uv_init;
 
