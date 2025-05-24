@@ -7,7 +7,8 @@
 // obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "scaf.h"
-#include "triangulate.h"
+
+#include <igl/writeOBJ.h>
 
 #include <Eigen/Dense>
 #include <Eigen/IterativeLinearSolvers>
@@ -137,9 +138,10 @@ IGL_INLINE void compute_scaffold_gradient_matrix(SCAFData &s,
        F2.col(2).asDiagonal() * Dz;
 }
 
-IGL_INLINE void mesh_improve(igl::triangle::SCAFData &s)
+IGL_INLINE bool mesh_improve(igl::triangle::SCAFData &s)
 {
   using namespace Eigen;
+
   MatrixXd m_uv = s.w_uv.topRows(s.mv_num);
   MatrixXd V_bnd;
   V_bnd.resize(s.internal_bnd.size(), 2);
@@ -184,18 +186,20 @@ IGL_INLINE void mesh_improve(igl::triangle::SCAFData &s)
     s.frame_ids = Eigen::VectorXi::LinSpaced(s.rect_frame_V.rows(), s.mv_num, s.mv_num + s.rect_frame_V.rows());
   }
 
+  SCAFRemeshData scafRemeshData = {};
+
   // Concatenate Vert and Edge
   MatrixXd V;
   MatrixXi E;
   igl::cat(1, V_bnd, s.rect_frame_V, V);
   E.resize(V.rows(), 2);
   for (int i = 0; i < E.rows(); i++)
-    E.row(i) << i, i + 1;
+      E.row(i) << i, i + 1;
   int acc_bs = 0;
   for (auto bs : s.bnd_sizes)
   {
-    E(acc_bs + bs - 1, 1) = acc_bs;
-    acc_bs += bs;
+      E(acc_bs + bs - 1, 1) = acc_bs;
+      acc_bs += bs;
   }
   E(V.rows() - 1, 1) = acc_bs;
   assert(acc_bs == s.internal_bnd.size());
@@ -206,16 +210,24 @@ IGL_INLINE void mesh_improve(igl::triangle::SCAFData &s)
     int hole_i = 0;
     for (auto cs : s.component_sizes)
     {
-      for (int i = 0; i < 3; i++)
+    for (int i = 0; i < 3; i++)
         H.row(hole_i) += m_uv.row(s.m_T(hole_f, i)); // redoing step 2
-      hole_f += cs;
-      hole_i++;
+    hole_f += cs;
+    hole_i++;
     }
   }
   H /= 3.;
 
-  MatrixXd uv2;
-  igl::triangle::triangulate(V, E, H, std::basic_string<char>("qYYQ"), uv2, s.s_T);
+  scafRemeshData.V = V;
+  scafRemeshData.E = E;
+  scafRemeshData.H = H;
+
+  if(!s.rm->remesh(scafRemeshData))
+    return false;
+  
+  MatrixXd uv2 = scafRemeshData.V2;
+  s.s_T = scafRemeshData.F2;
+
   auto bnd_n = s.internal_bnd.size();
 
   for (auto i = 0; i < s.s_T.rows(); i++)
@@ -243,6 +255,8 @@ IGL_INLINE void mesh_improve(igl::triangle::SCAFData &s)
   s.Ri_s = MatrixXd::Zero(s.Dx_s.rows(), s.dim * s.dim);
   s.Ji_s.resize(s.Dx_s.rows(), s.dim * s.dim);
   s.W_s.resize(s.Dx_s.rows(), s.dim * s.dim);
+
+  return true;
 }
 
 IGL_INLINE void add_new_patch(igl::triangle::SCAFData &s, const Eigen::MatrixXd &V_ref,
@@ -290,7 +304,7 @@ IGL_INLINE void add_new_patch(igl::triangle::SCAFData &s, const Eigen::MatrixXd 
 
   s.rect_frame_V = MatrixXd();
 
-  mesh_improve(s);
+  // mesh_improve(s);
 }
 
 IGL_INLINE void compute_jacobians(SCAFData &s, const Eigen::MatrixXd &V_new, bool whole)
@@ -558,11 +572,10 @@ IGL_INLINE void solve_weighted_arap(SCAFData &s, Eigen::MatrixXd &uv)
   using namespace Eigen;
   using namespace std;
   int dim = s.dim;
-  igl::Timer timer;
-  timer.start();
 
   VectorXi bnd_ids;
   igl::cat(1, s.fixed_ids, s.frame_ids, bnd_ids);
+
   const auto v_n = s.v_num;
   const auto bnd_n = bnd_ids.size();
   assert(bnd_n > 0);
@@ -592,6 +605,7 @@ IGL_INLINE void solve_weighted_arap(SCAFData &s, Eigen::MatrixXd &uv)
 
   SimplicialLDLT<Eigen::SparseMatrix<double>> solver;
   unknown_Uc = solver.compute(L).solve(rhs);
+
   igl::slice_into(unknown_Uc, unknown_ids.matrix(), 1, Uc);
   igl::slice_into(known_pos, known_ids.matrix(), 1, Uc);
 
@@ -601,10 +615,15 @@ IGL_INLINE void solve_weighted_arap(SCAFData &s, Eigen::MatrixXd &uv)
 IGL_INLINE double perform_iteration(SCAFData &s)
 {
   Eigen::MatrixXd V_out = s.w_uv;
+
   compute_jacobians(s, V_out, true);
+
   igl::slim_update_weights_and_closest_rotations_with_jacobians(s.Ji_m, s.slim_energy, 0, s.W_m, s.Ri_m);
+
   igl::slim_update_weights_and_closest_rotations_with_jacobians(s.Ji_s, s.scaf_energy, 0, s.W_s, s.Ri_s);
+
   solve_weighted_arap(s, V_out);
+
   std::function<double(Eigen::MatrixXd&)> whole_E = [&s](Eigen::MatrixXd &uv) { return compute_energy(s, uv, true); };
 
   Eigen::MatrixXi w_T;
@@ -612,15 +631,18 @@ IGL_INLINE double perform_iteration(SCAFData &s)
     igl::cat(1, s.m_T, s.s_T, w_T);
   else
     w_T = s.s_T;
-  return igl::flip_avoiding_line_search( w_T, s.w_uv, V_out, whole_E, -1) /
+
+  double val = igl::flip_avoiding_line_search( w_T, s.w_uv, V_out, whole_E, -1) /
     s.mesh_measure;
+
+  return val;    
 }
 
 }
 }
 }
 
-IGL_INLINE void igl::triangle::scaf_precompute(
+IGL_INLINE bool igl::triangle::scaf_precompute(
     const Eigen::MatrixXd &V,
     const Eigen::MatrixXi &F,
     const Eigen::MatrixXd &V_init,
@@ -632,7 +654,12 @@ IGL_INLINE void igl::triangle::scaf_precompute(
 {
   Eigen::MatrixXd CN;
   Eigen::MatrixXi FN;
+  
   igl::triangle::scaf::add_new_patch(data, V, F, Eigen::RowVector2d(0, 0), V_init);
+  
+  if(!scaf::mesh_improve(data))
+    return false;
+  
   data.soft_const_p = soft_p;
   for (int i = 0; i < b.rows(); i++)
     data.soft_cons[b(i)] = bc.row(i);
@@ -680,9 +707,11 @@ IGL_INLINE void igl::triangle::scaf_precompute(
 
     data.has_pre_calc = true;
   }
+
+  return true;
 }
 
-IGL_INLINE Eigen::MatrixXd igl::triangle::scaf_solve(igl::triangle::SCAFData &s, int iter_num)
+IGL_INLINE bool igl::triangle::scaf_solve(igl::triangle::SCAFData &s, int iter_num)
 {
   using namespace std;
   using namespace Eigen;
@@ -690,12 +719,16 @@ IGL_INLINE Eigen::MatrixXd igl::triangle::scaf_solve(igl::triangle::SCAFData &s,
 
   for (int it = 0; it < iter_num; it++)
   {
+
     s.total_energy = igl::triangle::scaf::compute_energy(s, s.w_uv, true) / s.mesh_measure;
     s.rect_frame_V = Eigen::MatrixXd();
-    igl::triangle::scaf::mesh_improve(s);
+
+    if(!igl::triangle::scaf::mesh_improve(s))
+        return false;
 
     double new_weight = s.mesh_measure * s.energy / (s.sf_num * 100);
     s.scaffold_factor = new_weight;
+
     igl::triangle::scaf::update_scaffold(s);
 
     s.total_energy = igl::triangle::scaf::perform_iteration(s);
@@ -704,7 +737,8 @@ IGL_INLINE Eigen::MatrixXd igl::triangle::scaf_solve(igl::triangle::SCAFData &s,
         igl::triangle::scaf::compute_energy(s, s.w_uv, false) / s.mesh_measure;
   }
 
-  return s.w_uv.topRows(s.mv_num);
+  // return s.w_uv.topRows(s.mv_num);
+  return true;
 }
 
 IGL_INLINE void igl::triangle::scaf_system(igl::triangle::SCAFData &s, Eigen::SparseMatrix<double> &L, Eigen::VectorXd &rhs)
